@@ -25,6 +25,10 @@ repos:
     hooks:
       - id: mdformat
         stages: [pre-commit]
+        # currently, all content in .claude, .gemini and .opencode is vendored
+        # openspec contains files which are sensitive to formatting, eg. keywords
+        # must appear on the first lines of requirements.
+        exclude: ^(\.(claude|gemini|opencode)|openspec)/
         additional_dependencies:
           - mdformat-gfm
 
@@ -74,3 +78,12 @@ repos:
         files: \.(yaml|yml)$
         additional_dependencies:
           - ansible-core>=2.20
+
+  - repo: local
+    hooks:
+      - id: openspec-validate
+        name: openspec validate
+        entry: openspec validate --no-interactive --strict --all
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

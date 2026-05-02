@@ -8,6 +8,9 @@ words:
   - breakbeam
   - commitlint
   - gpio
+  - opencode
+  - openspec
+  - opsx
   - pycache
   - pyenv
   - remigius
@@ -22,6 +25,11 @@ ignoreWords:
   - startswith
 ignorePaths:
   - .git
+  - .gemini/commands/opsx
+  - .gemini/skills/openspec*
+  - .opencode
+  - .claude/commands/opsx
+  - .claude/skills/openspec*
 dictionaries: []
 dictionaryDefinitions: []
 import: []
