@@ -1,0 +1,27 @@
+version: "0.2"
+language: "en-US"
+words:
+  - andreas
+  - ansible-vault
+  - anthropic
+  - bcm
+  - breakbeam
+  - commitlint
+  - gpio
+  - pycache
+  - pyenv
+  - remigius
+  - rpi
+  - shellcheck
+ignoreWords:
+  - endfor
+  - endraw
+  - lineinfile
+  - nocows
+  - realpath
+  - startswith
+ignorePaths:
+  - .git
+dictionaries: []
+dictionaryDefinitions: []
+import: []
