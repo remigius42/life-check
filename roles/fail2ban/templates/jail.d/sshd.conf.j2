@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+# Managed by Ansible — do not edit manually
+[sshd]
+enabled = true
+bantime  = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+{% if fail2ban_slack_webhook_url | default('') | length > 0 %}
+action = %(action_)s
+         slack-notify
+{% endif %}

@@ -3,3 +3,7 @@
 locales_timezone: "Europe/Zurich"
 ssh_manage_keys: false
 ufw_lan_subnet: "192.168.0.0/24"
+fail2ban_bantime: "1h"
+fail2ban_findtime: "10m"
+fail2ban_maxretry: 5
+fail2ban_slack_webhook_url: "{{ vault_fail2ban_slack_webhook_url | default('') }}"

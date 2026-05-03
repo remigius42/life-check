@@ -8,3 +8,4 @@
     - locales
     - ssh
     - ufw
+    - fail2ban

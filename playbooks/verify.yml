@@ -86,3 +86,48 @@
       ansible.builtin.assert:
         that: "_ufw_status.stdout is search('Status: active')"
         fail_msg: "UFW is not active"
+
+    - name: Assert fail2ban is running and enabled
+      ansible.builtin.assert:
+        that:
+          - "ansible_facts.services['fail2ban.service'] is defined"
+          - "ansible_facts.services['fail2ban.service'].state == 'running'"
+          - "ansible_facts.services['fail2ban.service'].status == 'enabled'"
+        fail_msg: "fail2ban service is not running or not enabled"
+
+    - name: Assert sshd jail drop-in exists
+      ansible.builtin.stat:
+        path: /etc/fail2ban/jail.d/sshd.conf
+      register: _fail2ban_sshd_jail
+      become: true
+
+    - name: Fail if sshd jail drop-in is missing
+      ansible.builtin.assert:
+        that: "_fail2ban_sshd_jail.stat.exists"
+        fail_msg: "/etc/fail2ban/jail.d/sshd.conf does not exist"
+
+    - name: Assert slack-notify.conf exists when webhook URL is set
+      ansible.builtin.stat:
+        path: /etc/fail2ban/action.d/slack-notify.conf
+      register: _fail2ban_slack_action
+      become: true
+      when: vault_fail2ban_slack_webhook_url is defined and vault_fail2ban_slack_webhook_url | length > 0
+
+    - name: Fail if slack-notify.conf is missing when webhook URL is set
+      ansible.builtin.assert:
+        that: "_fail2ban_slack_action.stat.exists"
+        fail_msg: "/etc/fail2ban/action.d/slack-notify.conf does not exist but vault_fail2ban_slack_webhook_url is set"
+      when: vault_fail2ban_slack_webhook_url is defined and vault_fail2ban_slack_webhook_url | length > 0
+
+    - name: Assert slack-notify.conf is absent when webhook URL is unset
+      ansible.builtin.stat:
+        path: /etc/fail2ban/action.d/slack-notify.conf
+      register: _fail2ban_slack_action_absent
+      become: true
+      when: vault_fail2ban_slack_webhook_url is not defined or vault_fail2ban_slack_webhook_url | length == 0
+
+    - name: Fail if slack-notify.conf exists when webhook URL is unset
+      ansible.builtin.assert:
+        that: "not _fail2ban_slack_action_absent.stat.exists"
+        fail_msg: "/etc/fail2ban/action.d/slack-notify.conf exists but vault_fail2ban_slack_webhook_url is not set"
+      when: vault_fail2ban_slack_webhook_url is not defined or vault_fail2ban_slack_webhook_url | length == 0

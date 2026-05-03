@@ -1,13 +1,18 @@
 version: "0.2"
 language: "en-US"
 words:
+  - actionban
+  - actionunban
   - andreas
   - ansible-vault
   - anthropic
+  - bantime
   - bcm
   - breakbeam
   - commitlint
+  - findtime
   - gpio
+  - maxretry
   - opencode
   - openspec
   - opsx
@@ -15,8 +20,11 @@ words:
   - pyenv
   - remigius
   - rpi
+  - setsid
   - shellcheck
   - timedatectl
+  - tunables
+  - unban
 ignoreWords:
   - endfor
   - endraw
