@@ -1,3 +1,4 @@
 # SPDX-License-Identifier: MIT
 ---
 locales_timezone: "Europe/Zurich"
+ssh_manage_keys: false

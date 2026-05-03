@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: MIT
+---
+# Unconditional hardening — runs before key-management checks
+- name: Harden sshd_config (key-independent settings)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: /usr/sbin/sshd -t -f %s
+  loop:
+    - { regexp: '^\s*#?\s*PermitRootLogin', line: 'PermitRootLogin no' }
+    - { regexp: '^\s*#?\s*PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+  become: true
+  notify: Restart sshd
+
+# Key management block — only when ssh_manage_keys: true
+- name: Key management
+  when: ssh_manage_keys
+  block:
+    - name: Check authorized_keys exists and is non-empty
+      ansible.builtin.stat:
+        path: "{{ ssh_remote_user_home }}/.ssh/authorized_keys"
+      register: ssh_authorized_keys
+
+    - name: Abort if no SSH key deployed
+      ansible.builtin.assert:
+        that:
+          - ssh_authorized_keys.stat.exists
+          - ssh_authorized_keys.stat.size > 0
+        fail_msg: >
+          {{ ssh_remote_user_home }}/.ssh/authorized_keys is absent or empty on {{ inventory_hostname }}.
+          Deploy an SSH public key before running this role to avoid lockout.
+
+    - name: Deploy public key
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ lookup('file', ssh_public_key_file) }}"
+
+    - name: Disable password authentication
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^\s*#?\s*PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+        validate: /usr/sbin/sshd -t -f %s
+      become: true
+      notify: Restart sshd

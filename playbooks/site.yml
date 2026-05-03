@@ -6,3 +6,4 @@
     - ../group_vars/all/vars.yml
   roles:
     - locales
+    - ssh

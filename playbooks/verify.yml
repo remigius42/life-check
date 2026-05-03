@@ -39,3 +39,38 @@
       ansible.builtin.assert:
         that: "_current_tz.stdout.strip() == locales_timezone"
         fail_msg: "Timezone is {{ _current_tz.stdout.strip() }}, expected {{ locales_timezone }}"
+
+    - name: Read /etc/ssh/sshd_config
+      ansible.builtin.slurp:
+        src: /etc/ssh/sshd_config
+      register: _sshd_config
+
+    - name: Assert PermitRootLogin no is set
+      ansible.builtin.assert:
+        that: "(_sshd_config.content | b64decode) is search('^PermitRootLogin no', multiline=True)"
+        fail_msg: "PermitRootLogin no not found in /etc/ssh/sshd_config"
+
+    - name: Assert PubkeyAuthentication yes is set
+      ansible.builtin.assert:
+        that: "(_sshd_config.content | b64decode) is search('^PubkeyAuthentication yes', multiline=True)"
+        fail_msg: "PubkeyAuthentication yes not found in /etc/ssh/sshd_config"
+
+    - name: Assert PasswordAuthentication no is set (ssh_manage_keys true)
+      ansible.builtin.assert:
+        that: "(_sshd_config.content | b64decode) is search('^PasswordAuthentication no', multiline=True)"
+        fail_msg: "PasswordAuthentication no not found in /etc/ssh/sshd_config"
+      when: ssh_manage_keys
+
+    - name: Assert PasswordAuthentication no is absent (ssh_manage_keys false)
+      ansible.builtin.assert:
+        that: "(_sshd_config.content | b64decode) is not search('^PasswordAuthentication no', multiline=True)"
+        fail_msg: "PasswordAuthentication no unexpectedly found in /etc/ssh/sshd_config"
+      when: not ssh_manage_keys
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Assert sshd is running
+      ansible.builtin.assert:
+        that: "ansible_facts.services[ssh_service_name + '.service'] is defined and ansible_facts.services[ssh_service_name + '.service'].state == 'running'"
+        fail_msg: "sshd service ({{ ssh_service_name }}) is not running"
