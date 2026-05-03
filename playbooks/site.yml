@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MIT
+---
+- name: Configure all hosts
+  hosts: all
+  vars_files:
+    - ../group_vars/all/vars.yml
+  roles:
+    - locales

@@ -1,0 +1,6 @@
+---
+- name: Test locales role
+  hosts: localhost
+  remote_user: root
+  roles:
+    - locales

@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MIT
+---
+- name: Verify all hosts
+  hosts: all
+  vars_files:
+    - ../group_vars/all/vars.yml
+  tasks:
+    - name: Assert locales package is installed
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Fail if locales package is missing
+      ansible.builtin.assert:
+        that: "'locales' in ansible_facts.packages"
+        fail_msg: "locales package is not installed"
+
+    - name: Read /etc/locale.gen
+      ansible.builtin.slurp:
+        src: /etc/locale.gen
+      register: _locale_gen
+
+    - name: Assert de_CH.UTF-8 is enabled in locale.gen
+      ansible.builtin.assert:
+        that: "(_locale_gen.content | b64decode) is search('^de_CH\\.UTF-8 UTF-8', multiline=True)"
+        fail_msg: "de_CH.UTF-8 UTF-8 not enabled in /etc/locale.gen"
+
+    - name: Assert en_US.UTF-8 is enabled in locale.gen
+      ansible.builtin.assert:
+        that: "(_locale_gen.content | b64decode) is search('^en_US\\.UTF-8 UTF-8', multiline=True)"
+        fail_msg: "en_US.UTF-8 UTF-8 not enabled in /etc/locale.gen"
+
+    - name: Get current timezone
+      ansible.builtin.command:
+        cmd: timedatectl show --property=Timezone --value
+      changed_when: false
+      register: _current_tz
+
+    - name: Assert timezone is correct
+      ansible.builtin.assert:
+        that: "_current_tz.stdout.strip() == locales_timezone"
+        fail_msg: "Timezone is {{ _current_tz.stdout.strip() }}, expected {{ locales_timezone }}"

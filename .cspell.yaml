@@ -16,6 +16,7 @@ words:
   - remigius
   - rpi
   - shellcheck
+  - timedatectl
 ignoreWords:
   - endfor
   - endraw

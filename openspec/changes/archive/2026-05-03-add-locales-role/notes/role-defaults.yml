@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT
+---
+locales_locale_gen_path: /etc/locale.gen
+locales_timezone: "UTC"
+locales_locales:
+  - string: "de_CH.UTF-8 UTF-8"
+    regexp: "^\\s*#?de_CH.UTF-8 UTF-8"
+  - string: "en_US.UTF-8 UTF-8"
+    regexp: "^\\s*#?en_US.UTF-8 UTF-8"
