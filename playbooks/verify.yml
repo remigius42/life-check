@@ -74,3 +74,15 @@
       ansible.builtin.assert:
         that: "ansible_facts.services[ssh_service_name + '.service'] is defined and ansible_facts.services[ssh_service_name + '.service'].state == 'running'"
         fail_msg: "sshd service ({{ ssh_service_name }}) is not running"
+
+    - name: Check ufw status
+      ansible.builtin.command:
+        cmd: ufw status
+      changed_when: false
+      become: true
+      register: _ufw_status
+
+    - name: Assert ufw is active
+      ansible.builtin.assert:
+        that: "_ufw_status.stdout is search('Status: active')"
+        fail_msg: "UFW is not active"

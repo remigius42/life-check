@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MIT
+---
+- name: Validate ufw_lan_subnet
+  ansible.builtin.assert:
+    that:
+      - ufw_lan_subnet is defined
+      - ufw_lan_subnet | length > 0
+      - ufw_lan_subnet is match('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$')
+    fail_msg: "ufw_lan_subnet must be a valid IPv4 CIDR (e.g. 192.168.0.0/24), got: '{{ ufw_lan_subnet }}'"
+
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: false
+  become: true
+
+- name: Set default deny incoming
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  become: true
+
+- name: Set default allow outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  become: true
+
+- name: Allow SSH from LAN subnet
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    src: "{{ ufw_lan_subnet }}"
+  become: true
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+  become: true
