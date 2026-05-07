@@ -47,7 +47,7 @@ internal pull-up (~50 kΩ) as a fallback. Use pin 9 (GND) and pin 2 or 4 (5 V) f
 - Raspberry Pi running Raspberry Pi OS Bookworm (Debian-based)
 - Hardware wired as described above
 - Ansible 2.14+ on your control machine
-- Python 3 with `ansible` and `ansible-lint` (see `pyproject.toml`)
+- Python 3.13+ with `ansible` and `ansible-lint` (see `pyproject.toml`)
 - A Slack incoming webhook URL (or any HTTP endpoint) for daily reports
 
 ## Setup

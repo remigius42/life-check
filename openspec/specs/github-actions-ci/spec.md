@@ -41,14 +41,14 @@ system` `openspec-validate` hook can resolve the binary under a known runtime.
 
 ### Requirement: detector-unit-tests hook runs in CI
 
-The workflow SHALL configure Python 3.11 via `actions/setup-python` and install
+The workflow SHALL configure Python 3.13 via `actions/setup-python` and install
 dependencies from `requirements-dev.txt` before invoking pre-commit, so the
 `language: system` `detector-unit-tests` hook can import `flask`.
 
 #### Scenario: Python deps available during pre-commit
 
 - **WHEN** the CI workflow runs pre-commit
-- **THEN** `flask` is importable under Python 3.11 and the `detector-unit-tests` hook exits successfully
+- **THEN** `flask` is importable under Python 3.13 and the `detector-unit-tests` hook exits successfully
 
 ### Requirement: DEVELOPMENT.md documents CI
 

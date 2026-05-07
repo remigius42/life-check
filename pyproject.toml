@@ -1,16 +1,16 @@
 [tool.black]
 line-length = 88
-target-version = ["py311"]
+target-version = ["py313"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]  # pycodestyle, pyflakes, isort
 
 [tool.pyright]
-pythonVersion = "3.11"
+pythonVersion = "3.13"
 typeCheckingMode = "standard"
 # RPi.GPIO is hardware-only and not installed on dev machines
 reportMissingModuleSource = "none"

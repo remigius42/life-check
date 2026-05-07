@@ -6,6 +6,8 @@ codebase.
 
 ## Dev environment
 
+Requires Python 3.13+.
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -58,7 +60,7 @@ Two hooks use `language: system` and require setup steps before pre-commit runs:
 - **detector-unit-tests** — needs `flask` and other packages from
   `requirements-dev.txt`.
   The workflow installs them via `pip install -r requirements-dev.txt` after
-  configuring Python 3.11 with `actions/setup-python`.
+  configuring Python 3.13 with `actions/setup-python`.
 
 A dummy `.vault_pass` is created in CI so ansible-lint's syntax checks don't
 abort — `ansible.cfg` requires the file unconditionally but no decryption
