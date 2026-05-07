@@ -7,7 +7,7 @@
   <rect width="880" height="450" fill="#f4f4f4"/>
 
   <!-- Title -->
-  <text x="440" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#222">Life Check — Wiring Diagram</text>
+  <text x="440" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#222">Life Check — Raspberry Pi Wiring Diagram</text>
   <text x="440" y="42" text-anchor="middle" font-size="9" fill="#666">GPIO 17 (BCM) = physical pin 11 · sensor 5 V, Pi GPIO 3.3 V → level shifter required</text>
 
   <!-- ====== WIRES (drawn first, underneath boxes) ====== -->
