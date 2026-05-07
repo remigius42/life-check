@@ -22,3 +22,7 @@ detector_report_threshold: 2
 detector_report_msg_ok: "Beam breaks today: ✅ OK (equal or above threshold)"
 detector_report_msg_low: "Beam breaks today: 🚨 under threshold"
 detector_report_msg_zero: "Beam breaks today: 0 ⚠️ no breaks today, sensor might be down."
+detector_web_port: 8080
+detector_web_user: "beam-detector-web"
+detector_pico_version: "2.1.1"
+# ufw_lan_subnet is required from group_vars/all/vars.yml and is not defined in this role

@@ -16,6 +16,8 @@ Python files are formatted with **Black** and linted with **Ruff**; type-checked
 - Configuration lives in `pyproject.toml` at the repo root (`[tool.black]`, `[tool.ruff]`, `[tool.pyright]`)
 - Scripts are deployed verbatim (not as Jinja2 templates) so they can be imported and tested without Ansible
 - `RPi.GPIO` is hardware-only; `reportMissingModuleSource` is suppressed in the Pyright config
+- Dev dependencies (e.g. `flask`, `waitress`) are in `requirements-dev.txt`
+  run tests via `.venv/bin/python3` — the system Python lacks these packages
 
 ## Adding new roles
 

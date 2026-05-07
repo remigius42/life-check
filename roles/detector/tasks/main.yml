@@ -153,3 +153,98 @@
     state: started
     daemon_reload: true
   become: true
+
+- name: Create beam-detector-web system user
+  ansible.builtin.user:
+    name: "{{ detector_web_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: /nonexistent
+    create_home: false
+    groups:
+      - "{{ detector_group }}"
+  become: true
+  when: detector_web_user != 'root'
+
+- name: Set run directory group and mode
+  ansible.builtin.file:
+    path: "{{ detector_run_dir }}"
+    state: directory
+    owner: root
+    group: "{{ detector_group }}"
+    mode: "2775"
+  become: true
+
+- name: Set data directory group and mode
+  ansible.builtin.file:
+    path: "{{ detector_data_dir }}"
+    state: directory
+    owner: "{{ detector_service_user }}"
+    group: "{{ detector_group }}"
+    mode: "0750"
+  become: true
+
+- name: Install python3-flask and python3-waitress
+  ansible.builtin.apt:
+    name:
+      - python3-flask
+      - python3-waitress
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Create static directory
+  ansible.builtin.file:
+    path: "{{ detector_install_dir }}/static"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Deploy Pico CSS
+  ansible.builtin.copy:
+    src: "static/pico-{{ detector_pico_version }}.min.css"
+    dest: "{{ detector_install_dir }}/static/pico-{{ detector_pico_version }}.min.css"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Deploy web server script
+  ansible.builtin.copy:
+    src: web.py
+    dest: "{{ detector_install_dir }}/web.py"
+    owner: root
+    group: "{{ detector_group }}"
+    mode: "0755"
+  become: true
+  notify: Restart beam-detector-web
+
+- name: Deploy web systemd service unit
+  ansible.builtin.template:
+    src: beam-detector-web.service.j2
+    dest: /etc/systemd/system/beam-detector-web.service
+    owner: root
+    mode: "0644"
+  become: true
+  notify:
+    - Reload systemd
+    - Restart beam-detector-web
+
+- name: Enable and start beam-detector-web service
+  ansible.builtin.systemd:
+    name: beam-detector-web
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+
+- name: Allow web port from LAN
+  community.general.ufw:
+    rule: allow
+    port: "{{ detector_web_port }}"
+    proto: tcp
+    src: "{{ ufw_lan_subnet }}"
+  become: true

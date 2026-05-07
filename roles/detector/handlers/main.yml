@@ -14,3 +14,9 @@
     name: beam-detector-report.timer
     state: restarted
   become: true
+
+- name: Restart beam-detector-web
+  ansible.builtin.systemd:
+    name: beam-detector-web
+    state: restarted
+  become: true

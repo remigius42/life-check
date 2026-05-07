@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+# Managed by Ansible — do not edit manually
+[Unit]
+Description=Beam-break detector web UI
+After=network.target
+
+[Service]
+Type=simple
+User={{ detector_web_user }}
+Group={{ detector_group }}
+ExecStart=/usr/bin/python3 "{{ detector_install_dir }}/web.py"
+Environment=DETECTOR_WEB_PORT={{ detector_web_port }}
+Environment=DETECTOR_STATE_PATH={{ detector_state_path }}
+Environment=DETECTOR_SENTINEL={{ detector_test_mode_sentinel }}
+Environment=DETECTOR_COUNTS_PATH={{ detector_counts_path }}
+Environment=DETECTOR_STATIC_DIR={{ detector_install_dir }}/static
+Environment=DETECTOR_PICO_CSS=pico-{{ detector_pico_version }}.min.css
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

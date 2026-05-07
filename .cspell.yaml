@@ -19,9 +19,11 @@ words:
   - opencode
   - openspec
   - opsx
+  - pico
   - pycache
   - pycodestyle
   - pyenv
+  - venv
   - pyflakes
   - pyproject
   - remigius
