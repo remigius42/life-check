@@ -44,6 +44,29 @@ fix: correct redirect status code to 303
 docs: update DEVELOPMENT.md
 ```
 
+## CI
+
+GitHub Actions runs all pre-commit hooks on every push to `main` and on pull
+requests from branches in the same repository (fork PRs are excluded — they lack
+access to repository secrets).
+
+Two hooks use `language: system` and require setup steps before pre-commit runs:
+
+- **openspec-validate** — needs the `openspec` Node.js CLI. The hook entry uses
+  `npx --yes openspec`, so no explicit install step is needed; `npx` resolves
+  the binary via Node.js 24 (pinned with `actions/setup-node`).
+- **detector-unit-tests** — needs `flask` and other packages from
+  `requirements-dev.txt`.
+  The workflow installs them via `pip install -r requirements-dev.txt` after
+  configuring Python 3.11 with `actions/setup-python`.
+
+A dummy `.vault_pass` is created in CI so ansible-lint's syntax checks don't
+abort — `ansible.cfg` requires the file unconditionally but no decryption
+happens during linting.
+
+> Any new `language: system` hook must have a corresponding setup step added to
+> `.github/workflows/ci.yml` before merging.
+
 ## OpenSpec workflow
 
 Changes are managed with [OpenSpec](https://openspec.dev). The typical cycle:

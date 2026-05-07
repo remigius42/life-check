@@ -105,7 +105,7 @@ repos:
     hooks:
       - id: openspec-validate
         name: openspec validate
-        entry: openspec validate --no-interactive --strict --all
+        entry: npx --yes @fission-ai/openspec validate --no-interactive --strict --all
         language: system
         pass_filenames: false
         stages: [pre-commit]
