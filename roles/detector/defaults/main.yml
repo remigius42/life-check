@@ -15,3 +15,10 @@ detector_test_mode_sentinel: "{{ detector_run_dir }}/test_mode"
 detector_service_user: root  # Stock Raspberry Pi OS pre Debian Bookwork requires root for GPIO
 detector_group: detector
 detector_report_user: beam-detector-report
+detector_report_webhook_url: ""
+detector_report_time: "17:00"
+detector_report_threshold: 2
+# {count} is available as an opt-in token in all three msg_* vars; omitted from defaults for privacy
+detector_report_msg_ok: "Beam breaks today: ✅ OK (equal or above threshold)"
+detector_report_msg_low: "Beam breaks today: 🚨 under threshold"
+detector_report_msg_zero: "Beam breaks today: 0 ⚠️ no breaks today, sensor might be down."

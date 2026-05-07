@@ -8,3 +8,9 @@
   ansible.builtin.systemd:
     name: beam-detector
     state: restarted
+
+- name: Restart beam-detector-report.timer
+  ansible.builtin.systemd:
+    name: beam-detector-report.timer
+    state: restarted
+  become: true

@@ -1,3 +1,4 @@
 # SPDX-License-Identifier: MIT
 ---
 vault_fail2ban_slack_webhook_url: ""
+vault_detector_report_webhook_url: ""

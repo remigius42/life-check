@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=Beam detector daily report timer
+
+[Timer]
+OnCalendar={{ detector_report_time }}
+Persistent=true
+Unit=beam-detector-report.service
+
+[Install]
+WantedBy=timers.target

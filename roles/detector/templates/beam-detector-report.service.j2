@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=Beam detector daily report
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 {{ detector_install_dir }}/reporter.py
+User={{ detector_report_user }}
+Group={{ detector_group }}
+WorkingDirectory={{ detector_install_dir }}
+EnvironmentFile={{ detector_install_dir }}/.env.report
+Environment=DETECTOR_REPORT_THRESHOLD={{ detector_report_threshold }}
+Environment="DETECTOR_REPORT_MSG_OK={{ detector_report_msg_ok | replace('"', '\\"') }}"
+Environment="DETECTOR_REPORT_MSG_LOW={{ detector_report_msg_low | replace('"', '\\"') }}"
+Environment="DETECTOR_REPORT_MSG_ZERO={{ detector_report_msg_zero | replace('"', '\\"') }}"
+Environment=DETECTOR_COUNTS_PATH={{ detector_counts_path }}

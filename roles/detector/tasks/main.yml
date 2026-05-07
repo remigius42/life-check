@@ -58,10 +58,13 @@
 
 - name: Deploy test suite
   ansible.builtin.copy:
-    src: tests/test_detector.py
-    dest: "{{ detector_install_dir }}/tests/test_detector.py"
+    src: "tests/{{ item }}"
+    dest: "{{ detector_install_dir }}/tests/{{ item }}"
     owner: "{{ detector_service_user }}"
     mode: "0644"
+  loop:
+    - test_detector.py
+    - test_reporter.py
   become: true
 
 - name: Deploy config from template
@@ -85,9 +88,67 @@
     - Reload systemd
     - Restart beam-detector
 
+- name: Create report user
+  ansible.builtin.user:
+    name: "{{ detector_report_user }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: /nonexistent
+    create_home: false
+    groups:
+      - "{{ detector_group }}"
+  become: true
+  when: detector_report_user != 'root'
+
 - name: Enable and start beam-detector service
   ansible.builtin.systemd:
     name: beam-detector
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+
+- name: Deploy reporter script
+  ansible.builtin.copy:
+    src: reporter.py
+    dest: "{{ detector_install_dir }}/reporter.py"
+    owner: root
+    group: "{{ detector_group }}"
+    mode: "0755"
+  become: true
+
+- name: Deploy report env file
+  ansible.builtin.template:
+    src: beam-detector-report.env.j2
+    dest: "{{ detector_install_dir }}/.env.report"
+    owner: "{{ detector_report_user }}"
+    group: "{{ detector_group }}"
+    mode: "0600"
+  become: true
+
+- name: Deploy report service unit
+  ansible.builtin.template:
+    src: beam-detector-report.service.j2
+    dest: /etc/systemd/system/beam-detector-report.service
+    owner: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Deploy report timer unit
+  ansible.builtin.template:
+    src: beam-detector-report.timer.j2
+    dest: /etc/systemd/system/beam-detector-report.timer
+    owner: root
+    mode: "0644"
+  become: true
+  notify:
+    - Reload systemd
+    - Restart beam-detector-report.timer
+
+- name: Enable report timer
+  ansible.builtin.systemd:
+    name: beam-detector-report.timer
     enabled: true
     state: started
     daemon_reload: true

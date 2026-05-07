@@ -176,3 +176,10 @@
           - "ansible_facts.services['beam-detector.service'].state == 'running'"
           - "ansible_facts.services['beam-detector.service'].status == 'enabled'"
         fail_msg: "beam-detector service is not running or not enabled"
+
+    - name: Assert beam-detector-report.timer is enabled
+      ansible.builtin.assert:
+        that:
+          - "ansible_facts.services['beam-detector-report.timer'] is defined"
+          - "ansible_facts.services['beam-detector-report.timer'].status == 'enabled'"
+        fail_msg: "beam-detector-report.timer is not enabled"
