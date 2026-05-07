@@ -275,5 +275,10 @@ See [NOTIFICATIONS.md](NOTIFICATIONS.md) for webhook setup (Slack, email, Telegr
 
 PRs are welcome. Fair warning: this is a personal project maintained on a
 best-effort basis, so responses and reviews may be slow and changes that don't
-fit the use case are unlikely to be merged. Opening an issue first to discuss is
-the best use of your time.
+fit the use case are unlikely to be merged.
+[Opening an issue first to discuss](https://github.com/remigius42/life-check/issues/new?template=feature_request.yml)
+is the best use of your time.
+
+Please note that this project is released with a
+[Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating
+you agree to abide by its terms.
