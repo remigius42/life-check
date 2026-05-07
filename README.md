@@ -16,8 +16,10 @@ report flags when the count is unusually low, giving family or caregivers a quie
 signal without cameras, wearables, or any required action from the person being
 monitored.
 
-Supports two deployment routes: an Ansible playbook that configures a Raspberry
-Pi from scratch, or ESPHome firmware for an ESP32.
+Supports two deployment routes: an [Ansible](https://docs.ansible.com) playbook
+that configures a [Raspberry Pi](https://www.raspberrypi.com) from scratch, or
+[ESPHome](https://esphome.io) firmware for an
+[ESP32](https://www.espressif.com/en/products/socs/esp32).
 
 ## What it does
 
@@ -245,13 +247,13 @@ From there the setup steps are identical to any other Pi.
 
 ## Roles
 
-| Role       | Purpose                                                 |
-| ---------- | ------------------------------------------------------- |
-| `locales`  | Timezone and locale                                     |
-| `ssh`      | SSH hardening, optional key management                  |
-| `ufw`      | Firewall — allows SSH and the web UI port from LAN only |
-| `fail2ban` | Brute-force protection with optional Slack alerts       |
-| `detector` | Break-beam daemon, daily reporter, web UI               |
+| Role                                   | Purpose                                                 |
+| -------------------------------------- | ------------------------------------------------------- |
+| [`locales`](roles/locales/README.md)   | Timezone and locale                                     |
+| [`ssh`](roles/ssh/README.md)           | SSH hardening, optional key management                  |
+| [`ufw`](roles/ufw/README.md)           | Firewall — allows SSH and the web UI port from LAN only |
+| [`fail2ban`](roles/fail2ban/README.md) | Brute-force protection with optional Slack alerts       |
+| [`detector`](roles/detector/README.md) | Break-beam daemon, daily reporter, web UI               |
 
 Each role has its own `README.md` with variable reference and example playbook.
 
