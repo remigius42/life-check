@@ -1,0 +1,6 @@
+[allowlist]
+description = "Paths containing intentional placeholder values, not real secrets"
+paths = [
+    '''esphome/secrets\.yaml\.example''',
+    '''openspec/changes/archive/''',
+]

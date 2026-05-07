@@ -6,11 +6,13 @@ words:
   - andreas
   - ansible-vault
   - anthropic
+  - automations
   - bantime
   - bcm
   - breakbeam
   - commitlint
   - dataclass
+  - esphome
   - findtime
   - gpio
   - isort
@@ -24,14 +26,17 @@ words:
   - pycodestyle
   - pyenv
   - venv
+  - pullup
   - pyflakes
   - pyproject
+  - reflashing
   - remigius
   - rpi
   - setext
   - setgid
   - setsid
   - shellcheck
+  - sntp
   - stdlib
   - timedatectl
   - tmpfs
@@ -39,6 +44,8 @@ words:
   - tunables
   - unban
   - urlopen
+  - vbus
+  - wroom
 ignoreWords:
   - elif
   - endfor

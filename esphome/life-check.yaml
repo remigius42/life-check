@@ -1,0 +1,260 @@
+# cspell:ignore esphome npos pullup sntp tmpl useragent
+esphome:
+  name: life-check
+  min_version: "2024.6.0"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Life Check Fallback"
+    password: !secret ota_password
+
+logger:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+web_server:
+  port: 80
+  auth:
+    username: !secret web_username
+    password: !secret web_password
+
+http_request:
+  useragent: esphome/life-check
+  timeout: 10s
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: !secret timezone
+    on_time:
+      # Midnight rollover: shift history FIFO, reset today's count
+      # Index 0 = yesterday, index 13 = 14 days ago; oldest entry is dropped
+      - seconds: 0
+        minutes: 0
+        hours: 0
+        then:
+          - lambda: |-
+              for (int i = 13; i > 0; i--) {
+                id(daily_counts)[i] = id(daily_counts)[i-1];
+              }
+              id(daily_counts)[0] = id(today_count);
+              id(today_count) = 0;
+      # Daily 17:00 report
+      - seconds: 0
+        minutes: 0
+        hours: 17
+        then:
+          - script.execute: send_daily_report
+
+globals:
+  - id: today_count
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: daily_counts
+    type: int[14]
+    restore_value: false
+    initial_value: '{0,0,0,0,0,0,0,0,0,0,0,0,0,0}'
+  - id: test_mode_active
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: webhook_attempt
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: webhook_message
+    type: std::string
+    restore_value: false
+    initial_value: '""'
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: !secret beam_gpio_pin
+      mode:
+        input: true
+        pullup: false  # divider provides pull-up; internal pull-up would raise LOW to ~0.94V (ambiguous)
+      inverted: true   # NPN active-low: GPIO LOW = beam broken = sensor ON
+    name: "Beam"
+    id: beam_sensor
+    # 100 ms chosen: suppresses sensor noise/vibration, well within 50-200 ms spec
+    filters:
+      - delayed_on: 100ms
+      - delayed_off: 100ms
+    on_press:
+      - if:
+          condition:
+            lambda: 'return !id(test_mode_active);'
+          then:
+            - lambda: 'id(today_count) += 1;'
+
+sensor:
+  - platform: template
+    name: "Today's Break Count"
+    id: today_count_sensor
+    lambda: 'return id(today_count);'
+    update_interval: 60s
+    unit_of_measurement: "crossings"
+    accuracy_decimals: 0
+
+text:
+  - platform: template
+    id: webhook_url
+    name: "Webhook URL"
+    mode: text
+    max_length: 254
+    restore_value: true
+    optimistic: true
+    initial_value: !secret webhook_url
+  - platform: template
+    id: msg_ok
+    name: "Message: OK"
+    mode: text
+    max_length: 254
+    restore_value: true
+    optimistic: true
+    initial_value: !secret msg_ok
+  - platform: template
+    id: msg_low
+    name: "Message: Low"
+    mode: text
+    max_length: 254
+    restore_value: true
+    optimistic: true
+    initial_value: !secret msg_low
+  - platform: template
+    id: msg_zero
+    name: "Message: Zero"
+    mode: text
+    max_length: 254
+    restore_value: true
+    optimistic: true
+    initial_value: !secret msg_zero
+
+number:
+  - platform: template
+    id: break_threshold
+    name: "Break Threshold"
+    min_value: 0
+    max_value: 100
+    step: 1
+    restore_value: true
+    optimistic: true
+    initial_value: 2
+  - platform: template
+    id: webhook_retries
+    name: "Webhook Retries"
+    min_value: 0
+    max_value: 10
+    step: 1
+    restore_value: true
+    optimistic: true
+    initial_value: 3
+
+switch:
+  - platform: template
+    name: "Test Mode"
+    id: test_mode_switch
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - lambda: 'id(test_mode_active) = true;'
+      - script.execute: test_mode_revert_timer
+    turn_off_action:
+      - lambda: 'id(test_mode_active) = false;'
+      - script.stop: test_mode_revert_timer
+
+script:
+  - id: test_mode_revert_timer
+    mode: restart  # re-enabling test mode resets the 30-minute clock
+    then:
+      - delay: 30min
+      - switch.turn_off: test_mode_switch
+
+  - id: send_daily_report
+    then:
+      - if:
+          condition:
+            lambda: 'return id(webhook_url).state.empty();'
+          then:
+            - logger.log: "Webhook URL not configured, skipping report"
+          else:
+            - lambda: |-
+                int count = id(today_count);
+                int threshold = (int) id(break_threshold).state;
+                std::string tmpl;
+                if (count == 0) {
+                  tmpl = id(msg_zero).state;
+                } else if (count < threshold) {
+                  tmpl = id(msg_low).state;
+                } else {
+                  tmpl = id(msg_ok).state;
+                }
+                std::string repl = std::to_string(count);
+                size_t pos = 0;
+                while ((pos = tmpl.find("{count}", pos)) != std::string::npos) {
+                  tmpl.replace(pos, 7, repl);
+                  pos += repl.size();
+                }
+                id(webhook_message) = tmpl;
+            - lambda: 'id(webhook_attempt) = 0;'
+            - script.execute: do_webhook_attempt
+
+  - id: do_webhook_attempt
+    mode: restart  # called from within on_response/on_error while still running; restart is required for retries to execute
+    then:
+      - http_request.post:
+          url: !lambda 'return id(webhook_url).state;'
+          request_headers:
+            Content-Type: application/json
+          body: !lambda |-
+            std::string msg = id(webhook_message);
+            std::string escaped;
+            for (char c : msg) {
+              if (c == '"') escaped += "\\\"";
+              else if (c == '\\') escaped += "\\\\";
+              else if (c == '\n') escaped += "\\n";
+              else if (c == '\r') escaped += "\\r";
+              else if (c == '\t') escaped += "\\t";
+              else escaped += c;
+            }
+            return "{\"text\": \"" + escaped + "\"}";
+          on_response:
+            then:
+              - if:
+                  condition:
+                    lambda: 'return response->status_code >= 200 && response->status_code < 300;'
+                  else:
+                    - lambda: 'id(webhook_attempt) += 1;'
+                    - if:
+                        condition:
+                          lambda: 'return id(webhook_attempt) <= (int) id(webhook_retries).state;'
+                        then:
+                          - delay: 30s
+                          - script.execute: do_webhook_attempt
+                        else:
+                          - logger.log:
+                              level: ERROR
+                              format: "Webhook failed after all attempts"
+          on_error:
+            then:
+              - lambda: 'id(webhook_attempt) += 1;'
+              - if:
+                  condition:
+                    lambda: 'return id(webhook_attempt) <= (int) id(webhook_retries).state;'
+                  then:
+                    - delay: 30s
+                    - script.execute: do_webhook_attempt
+                  else:
+                    - logger.log:
+                        level: ERROR
+                        format: "Webhook failed after all attempts (network error)"

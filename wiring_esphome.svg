@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- spellchecker: ignore dasharray -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" width="880" height="520"
+     font-family="Arial, Helvetica, sans-serif" font-size="11">
+
+  <!-- Background -->
+  <rect width="880" height="520" fill="#f4f4f4"/>
+
+  <!-- Title -->
+  <text x="440" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#222">Life Check — ESPHome Wiring Diagram</text>
+  <text x="440" y="42" text-anchor="middle" font-size="9" fill="#666">No level shifter needed — resistor divider drops sensor 5V signal to ~3.33V (ESP32 max 3.6V)</text>
+
+  <!-- ====== WIRES (drawn first, underneath boxes and resistors) ====== -->
+
+  <!-- 5V (red) bus: ESP32 VBUS → horizontal bus → vertical bus at x=545 -->
+  <line x1="165" y1="145" x2="545" y2="145" stroke="#cc1111" stroke-width="2.5"/>
+  <!-- 5V bus vertical at x=545 -->
+  <line x1="545" y1="128" x2="545" y2="308" stroke="#cc1111" stroke-width="2.5"/>
+  <!-- Branch: Transmitter VCC -->
+  <line x1="545" y1="128" x2="593" y2="128" stroke="#cc1111" stroke-width="2.5"/>
+  <!-- Branch: Receiver VCC -->
+  <line x1="545" y1="305" x2="593" y2="305" stroke="#cc1111" stroke-width="2.5"/>
+
+  <!-- GND (dark) bus: ESP32 GND → horizontal at y=185 → vertical at x=535 -->
+  <line x1="165" y1="185" x2="535" y2="185" stroke="#333" stroke-width="2.5"/>
+  <!-- GND bus vertical at x=535 -->
+  <line x1="535" y1="155" x2="535" y2="365" stroke="#333" stroke-width="2.5"/>
+  <!-- Branch: Transmitter GND -->
+  <line x1="535" y1="155" x2="593" y2="155" stroke="#333" stroke-width="2.5"/>
+  <!-- Branch: Receiver GND -->
+  <line x1="535" y1="332" x2="593" y2="332" stroke="#333" stroke-width="2.5"/>
+  <!-- Branch: 20kΩ bottom to GND bus -->
+  <line x1="330" y1="365" x2="535" y2="365" stroke="#333" stroke-width="2.5"/>
+
+  <!-- Signal (blue): GPIO → wire → 10kΩ resistor → wire → junction → sensor signal -->
+  <!-- GPIO to 10kΩ left -->
+  <line x1="165" y1="270" x2="208" y2="270" stroke="#2255cc" stroke-width="2.5"/>
+  <!-- 10kΩ right to junction -->
+  <line x1="272" y1="270" x2="330" y2="270" stroke="#2255cc" stroke-width="2.5"/>
+  <!-- Junction to routing point (going right then down to receiver signal) -->
+  <line x1="330" y1="270" x2="480" y2="270" stroke="#2255cc" stroke-width="2.5"/>
+  <line x1="480" y1="270" x2="480" y2="358" stroke="#2255cc" stroke-width="2.5"/>
+  <line x1="480" y1="358" x2="593" y2="358" stroke="#2255cc" stroke-width="2.5"/>
+
+  <!-- 20kΩ signal wire: junction down through 20kΩ to GND bus -->
+  <line x1="330" y1="270" x2="330" y2="305" stroke="#2255cc" stroke-width="2.5"/>
+  <!-- Below 20kΩ box to GND extension -->
+  <line x1="330" y1="345" x2="330" y2="365" stroke="#333" stroke-width="2.5"/>
+
+  <!-- ====== COMPONENT BOXES (drawn over wires) ====== -->
+
+  <!-- ESP32 DevKit -->
+  <rect x="20" y="68" width="145" height="250" rx="7" fill="#1a3a6e" stroke="#0d2545" stroke-width="2"/>
+
+  <!-- 10kΩ resistor (inline on signal wire, horizontal) -->
+  <rect x="208" y="259" width="64" height="22" rx="3" fill="#fffbe6" stroke="#997700" stroke-width="1.5"/>
+  <text x="240" y="274" text-anchor="middle" fill="#664400" font-size="9" font-weight="bold">10 kΩ</text>
+
+  <!-- 20kΩ resistor (signal junction to GND, vertical) -->
+  <rect x="318" y="305" width="24" height="40" rx="3" fill="#fffbe6" stroke="#997700" stroke-width="1.5"/>
+  <text x="330" y="325" text-anchor="middle" fill="#664400" font-size="9" font-weight="bold">20</text>
+  <text x="330" y="337" text-anchor="middle" fill="#664400" font-size="9" font-weight="bold">kΩ</text>
+
+  <!-- Transmitter -->
+  <rect x="593" y="88" width="270" height="98" rx="6" fill="#fff2f2" stroke="#cc2222" stroke-width="2"/>
+
+  <!-- Receiver -->
+  <rect x="593" y="265" width="270" height="118" rx="6" fill="#f2fff2" stroke="#229922" stroke-width="2"/>
+
+  <!-- ====== LABELS ====== -->
+
+  <!-- ESP32 DevKit box header -->
+  <text x="92" y="89" text-anchor="middle" fill="white" font-size="12" font-weight="bold">ESP32 DevKit</text>
+  <!-- WROOM label in orange -->
+  <text x="92" y="103" text-anchor="middle" fill="#f08000" font-size="9" font-weight="bold">WROOM DevKit v1</text>
+  <!-- S3 label in purple -->
+  <text x="92" y="116" text-anchor="middle" fill="#dd88ff" font-size="9" font-weight="bold">/ S3 DevKit</text>
+
+  <!-- ESP32 pin labels (right-anchored at x=157) -->
+  <text x="157" y="149" text-anchor="end" fill="#ffaaaa" font-size="9">VBUS (5V)</text>
+  <text x="157" y="189" text-anchor="end" fill="#cccccc" font-size="9">GND</text>
+  <!-- WROOM GPIO label (orange) -->
+  <text x="157" y="266" text-anchor="end" fill="#f08000" font-size="9">GPIO 4 · WROOM pin 26</text>
+  <!-- S3 GPIO label (purple) — same GPIO4, different header position -->
+  <text x="157" y="279" text-anchor="end" fill="#dd88ff" font-size="9">GPIO 4 · S3-DevKitC-1 J1 pin 4</text>
+
+  <!-- Resistor divider label -->
+  <text x="349" y="283" fill="#664400" font-size="8" font-style="italic">pull-up node</text>
+
+  <!-- Transmitter -->
+  <text x="728" y="110" text-anchor="middle" fill="#880000" font-size="12" font-weight="bold">Transmitter</text>
+  <text x="728" y="126" text-anchor="middle" fill="#880000" font-size="9">DFRobot IR TX — red PCB</text>
+  <text x="608" y="132" fill="#880000" font-size="9">VCC (red wire)</text>
+  <text x="608" y="159" fill="#880000" font-size="9">GND (black wire)</text>
+  <text x="728" y="178" text-anchor="middle" fill="#aaaaaa" font-size="8" font-style="italic">green wire: floating, unused</text>
+
+  <!-- Receiver -->
+  <text x="728" y="287" text-anchor="middle" fill="#006600" font-size="12" font-weight="bold">Receiver</text>
+  <text x="728" y="303" text-anchor="middle" fill="#006600" font-size="9">DFRobot IR RX — black PCB</text>
+  <text x="608" y="309" fill="#006600" font-size="9">VCC (red wire)</text>
+  <text x="608" y="336" fill="#006600" font-size="9">GND (black wire)</text>
+  <text x="608" y="362" fill="#006600" font-size="9">Signal (blue wire) — NPN open-collector</text>
+
+  <!-- ====== CONNECTION DOTS ====== -->
+
+  <!-- ESP32 right-edge pin dots -->
+  <circle cx="165" cy="145" r="5" fill="#cc1111"/>
+  <circle cx="165" cy="185" r="5" fill="#333"/>
+  <circle cx="165" cy="270" r="5" fill="#2255cc"/>
+
+  <!-- Signal junction (10kΩ output / 20kΩ top / horizontal signal meet) -->
+  <circle cx="330" cy="270" r="5" fill="#2255cc"/>
+
+  <!-- 5V bus junctions -->
+  <circle cx="545" cy="145" r="4" fill="#cc1111"/>
+  <circle cx="545" cy="128" r="4" fill="#cc1111"/>
+  <circle cx="545" cy="305" r="4" fill="#cc1111"/>
+
+  <!-- GND bus junctions -->
+  <circle cx="535" cy="185" r="4" fill="#333"/>
+  <circle cx="535" cy="155" r="4" fill="#333"/>
+  <circle cx="535" cy="332" r="4" fill="#333"/>
+  <circle cx="535" cy="365" r="4" fill="#333"/>
+  <circle cx="330" cy="365" r="4" fill="#333"/>
+
+  <!-- Transmitter left-edge dots -->
+  <circle cx="593" cy="128" r="5" fill="#cc1111"/>
+  <circle cx="593" cy="155" r="5" fill="#333"/>
+
+  <!-- Receiver left-edge dots -->
+  <circle cx="593" cy="305" r="5" fill="#cc1111"/>
+  <circle cx="593" cy="332" r="5" fill="#333"/>
+  <circle cx="593" cy="358" r="5" fill="#2255cc"/>
+
+  <!-- ====== LEGEND ====== -->
+  <rect x="15" y="398" width="300" height="112" rx="4" fill="white" stroke="#cccccc" stroke-width="1"/>
+  <text x="165" y="415" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">Legend</text>
+  <!-- Wire colors -->
+  <line x1="28" y1="430" x2="65" y2="430" stroke="#cc1111" stroke-width="2.5"/>
+  <text x="72" y="434" fill="#333" font-size="10">5V / VBUS</text>
+  <line x1="28" y1="447" x2="65" y2="447" stroke="#333" stroke-width="2.5"/>
+  <text x="72" y="451" fill="#333" font-size="10">GND</text>
+  <line x1="28" y1="464" x2="65" y2="464" stroke="#2255cc" stroke-width="2.5"/>
+  <text x="72" y="468" fill="#333" font-size="10">GPIO / signal</text>
+  <!-- Board label colors -->
+  <rect x="155" y="422" width="12" height="12" rx="2" fill="#f08000"/>
+  <text x="172" y="432" fill="#333" font-size="10">WROOM DevKit v1 pin label</text>
+  <rect x="155" y="438" width="12" height="12" rx="2" fill="#dd88ff"/>
+  <text x="172" y="448" fill="#333" font-size="10">S3 DevKit pin label</text>
+  <text x="28" y="485" fill="#777" font-size="8" font-style="italic">Wires crossing without a dot do not connect.</text>
+  <text x="28" y="497" fill="#777" font-size="8" font-style="italic">Do NOT enable ESP32 internal pull-up — see note below.</text>
+
+  <!-- ====== CAPTION / NOTE ====== -->
+  <rect x="325" y="398" width="540" height="112" rx="4" fill="#fffff0" stroke="#cccc88" stroke-width="1"/>
+  <text x="595" y="415" text-anchor="middle" font-size="10" font-weight="bold" fill="#555">Important: resistor divider replaces the BSS138 level shifter used on the Pi</text>
+  <text x="335" y="432" fill="#444" font-size="9">The divider works because the ESP32 internal pull-up is NOT enabled. If the internal pull-up were</text>
+  <text x="335" y="446" fill="#444" font-size="9">enabled (~45 kΩ to 3.3V in parallel with the 20 kΩ to GND), the LOW voltage when the beam is broken</text>
+  <text x="335" y="460" fill="#444" font-size="9">would rise to ~0.94V — above the ESP32's 0.8V LOW threshold, causing missed detections.</text>
+  <text x="335" y="474" fill="#444" font-size="9">Voltage math: HIGH = 5V × 20kΩ/(10kΩ+20kΩ) = 3.33V ✓  LOW ≈ 0V ✓  (ESP32 max input: 3.6V)</text>
+  <text x="335" y="490" fill="#666" font-size="8" font-style="italic">A BSS138 active level shifter also works on the ESP32 if preferred — see notes/hardware-wiring.md</text>
+
+</svg>

@@ -76,6 +76,7 @@ repos:
       - id: ansible-lint
         stages: [pre-commit]
         files: \.(yaml|yml)$
+        exclude: ^esphome/
         additional_dependencies:
           - ansible-core>=2.20
 
@@ -116,4 +117,12 @@ repos:
         language: system
         pass_filenames: false
         files: ^roles/detector/files/.*\.py$
+        stages: [pre-commit]
+
+      - id: esphome-config-validate
+        name: ESPHome config validate
+        entry: bash -c 'cp -n esphome/secrets.yaml.example esphome/secrets.yaml && esphome config esphome/life-check.yaml'
+        language: system
+        pass_filenames: false
+        files: ^esphome/
         stages: [pre-commit]

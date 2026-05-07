@@ -1,6 +1,6 @@
 # spellchecker: ignore Connor Cython Pipfile Pipfile Scrapy Sessionx
 # spellchecker: ignore Spyder apdisk celerybeat dmypy donotpresent
-# spellchecker: ignore fseventsd htmlcov ionide ipynb ipython mkdocs
+# spellchecker: ignore esphome fseventsd htmlcov ionide ipynb ipython mkdocs
 # spellchecker: ignore mypy netrwhist nosetests pipenv pybuilder
 # spellchecker: ignore pyflow pypa pypackages pyrightconfig pytest
 # spellchecker: ignore pytype ropeproject sdist spyderproject
@@ -11,6 +11,9 @@
 
 # Ansible vault password file
 .vault_pass
+
+# ESPHome secrets (contains WiFi credentials, OTA password, webhook URL)
+esphome/secrets.yaml
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,ansible,visualstudiocode,vim,linux,macos

@@ -16,16 +16,35 @@ report flags when the count is unusually low, giving family or caregivers a quie
 signal without cameras, wearables, or any required action from the person being
 monitored.
 
-Implemented as an Ansible playbook that configures a Raspberry Pi from scratch.
+Supports two deployment routes: an Ansible playbook that configures a Raspberry
+Pi from scratch, or ESPHome firmware for an ESP32.
 
 ## What it does
 
-- Hardens the Pi: locale, SSH, UFW firewall, fail2ban
-- Installs a GPIO polling daemon that counts break-beam events per day
-- Sends a daily Slack (or generic webhook) report with a configurable low-count alert
+- Counts daily break-beam crossings via a doorway sensor
+- Sends a daily webhook report with a configurable low-count alert
 - Exposes a small web UI for live status
 
+The Raspberry Pi route additionally hardens the host (locale, SSH, UFW,
+fail2ban) via Ansible.
+
+## Hardware options
+
+Two deployment routes are supported — both use the same DFRobot sensor and
+deliver the same core features.
+
+| Route               | Pros                                                                                        | Cons                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Raspberry Pi**    | Familiar Linux environment; easy to add future automations; history persists across reboots | Heavier setup (Ansible, Python stack, systemd); higher power draw; more expensive             |
+| **ESP32 + ESPHome** | Simpler setup (flash one firmware); lower power; cheaper hardware; built-in web UI and OTA  | 14-day history resets on reboot (today's count is preserved); customization requires YAML/C++ |
+
+For the ESP32 route, a passive resistor divider (10 kΩ + 20 kΩ) handles level shifting from the sensor's
+5 V signal to the ESP32's 3.3 V GPIO — no separate level shifter board is needed. A BSS138 active
+level shifter also works if you prefer it.
+
 ## Hardware parts list
+
+### Raspberry Pi
 
 | Part                                                                                 | Notes                                                      |
 | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
@@ -34,13 +53,30 @@ Implemented as an Ansible playbook that configures a Raspberry Pi from scratch.
 | Logic level shifter, ≥ 1 channel                                                     | Required — receiver signal output is 5 V, Pi GPIO is 3.3 V |
 | 5 V power supply for the sensor                                                      | The Pi's 5 V GPIO rail is sufficient; sensor draws 30 mA   |
 
-![Wiring diagram](wiring.svg)
+![Raspberry Pi wiring diagram](wiring_rpi.svg)
 
 Wire the receiver blue wire through the logic shifter to **GPIO 17 (BCM), physical pin 11**
 (see [pinout.xyz](https://pinout.xyz/pinout/pin11_gpio17/) for the full 40-pin header reference).
 The receiver is NPN open-collector — a pull-up to 3.3V is required on the LV side of the shifter.
 Most BSS138-based shifter boards include pull-ups on both sides; the daemon also enables the Pi's
 internal pull-up (~50 kΩ) as a fallback. Use pin 9 (GND) and pin 2 or 4 (5 V) for sensor power.
+
+### ESP32
+
+| Part                                                                                 | Notes                                                                 |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| ESP32 dev board (WROOM DevKit v1 or S3 DevKit)                                       | Any ESP32 with a free GPIO works                                      |
+| [DFRobot 5V IR Photoelectric Switch, 4 m](https://www.dfrobot.com/product-2644.html) | Same sensor as the Pi route                                           |
+| 10 kΩ resistor                                                                       | Series resistor on sensor signal line                                 |
+| 20 kΩ resistor                                                                       | Pull-down from GPIO to GND; together with 10 kΩ forms voltage divider |
+
+![ESP32 wiring diagram](wiring_esphome.svg)
+
+Wire sensor power from the board's **VBUS (5 V)** pin. Connect the receiver signal through the
+resistor divider (10 kΩ series + 20 kΩ to GND) to **GPIO 4** — WROOM DevKit v1 physical pin 26,
+S3-DevKitC-1 J1 pin 4. Do **not** enable the internal pull-up on the GPIO
+(the divider acts as the pull-up; enabling the internal pull-up raises the LOW voltage to ~0.94 V,
+above the detection threshold).
 
 ## Prerequisites
 
@@ -108,6 +144,53 @@ ansible-playbook playbooks/verify.yml
 ```
 
 The verify playbook asserts expected post-state on the target host.
+
+## ESPHome setup
+
+### 1. Install ESPHome CLI
+
+Requires ESPHome 2024.6.0 or later.
+
+```bash
+pip install esphome
+```
+
+### 2. Create your secrets file
+
+```bash
+cp esphome/secrets.yaml.example esphome/secrets.yaml
+# Edit esphome/secrets.yaml with your WiFi, webhook URL, and timezone
+```
+
+`secrets.yaml` is gitignored — never commit it.
+
+### 3. First flash (USB)
+
+Connect the ESP32 via USB, then:
+
+```bash
+esphome run esphome/life-check.yaml
+```
+
+ESPHome will compile the firmware, flash it over USB, and open the serial log.
+After first flash the device is on your WiFi and subsequent updates can be done
+over-the-air.
+
+### 4. OTA updates
+
+Once the device is on the network:
+
+```bash
+esphome run esphome/life-check.yaml
+```
+
+ESPHome discovers the device via mDNS and uploads wirelessly — no USB required.
+
+### 5. Configure webhook and thresholds
+
+Open the device's web UI at its IP address on port 80. All runtime settings
+(webhook URL, message templates, threshold, retry count) are editable there and
+survive reboots.
 
 ## Raspberry Pi Zero
 

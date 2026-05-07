@@ -1,0 +1,11 @@
+{
+  // ESPHome uses custom YAML tags that the language server doesn't know about.
+  // Declaring them here suppresses "Unresolved tag" warnings in esphome/*.yaml.
+  "yaml.customTags": [
+    "!secret scalar",
+    "!lambda scalar",
+    "!extend mapping",
+    "!remove scalar",
+    "!include scalar"
+  ]
+}
