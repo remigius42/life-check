@@ -10,26 +10,37 @@ words:
   - bcm
   - breakbeam
   - commitlint
+  - dataclass
   - findtime
   - gpio
+  - isort
   - maxretry
   - opencode
   - openspec
   - opsx
   - pycache
+  - pycodestyle
   - pyenv
+  - pyflakes
+  - pyproject
   - remigius
   - rpi
+  - setext
+  - setgid
   - setsid
   - shellcheck
   - timedatectl
+  - tmpfs
+  - toctou
   - tunables
   - unban
 ignoreWords:
   - endfor
   - endraw
+  - isdir
   - lineinfile
   - nocows
+  - nologin
   - realpath
   - startswith
 ignorePaths:

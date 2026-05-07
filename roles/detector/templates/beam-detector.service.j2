@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT
+# Managed by Ansible — do not edit manually
+[Unit]
+Description=Beam-break detector daemon
+After=network.target
+
+[Service]
+Type=simple
+User={{ detector_service_user }}
+Group={{ detector_group }}
+ExecStart=/usr/bin/python3 {{ detector_install_dir }}/detector.py --config {{ detector_config_dir }}/config.ini
+Restart=on-failure
+RuntimeDirectory=beam_detector
+RuntimeDirectoryMode=2775
+
+[Install]
+WantedBy=multi-user.target

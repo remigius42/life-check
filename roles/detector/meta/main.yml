@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+---
+galaxy_info:
+  author: Andreas Remigius Schmidt
+  description: >
+    Installs and manages the beam-detector daemon and
+    daily report service on Raspberry Pi OS
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - all
+
+dependencies: []

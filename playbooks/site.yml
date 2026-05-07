@@ -9,3 +9,4 @@
     - ssh
     - ufw
     - fail2ban
+    - detector

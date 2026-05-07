@@ -131,3 +131,48 @@
         that: "not _fail2ban_slack_action_absent.stat.exists"
         fail_msg: "/etc/fail2ban/action.d/slack-notify.conf exists but vault_fail2ban_slack_webhook_url is not set"
       when: vault_fail2ban_slack_webhook_url is not defined or vault_fail2ban_slack_webhook_url | length == 0
+
+    - name: Assert python3-rpi.gpio is installed
+      ansible.builtin.assert:
+        that: "'python3-rpi.gpio' in ansible_facts.packages"
+        fail_msg: "python3-rpi.gpio package is not installed"
+
+    - name: Assert detector script is present
+      ansible.builtin.stat:
+        path: /opt/beam_detector/detector.py
+      register: _detector_script
+
+    - name: Fail if detector script is missing
+      ansible.builtin.assert:
+        that: "_detector_script.stat.exists"
+        fail_msg: "/opt/beam_detector/detector.py does not exist"
+
+    - name: Assert detector config is present
+      ansible.builtin.stat:
+        path: /etc/beam_detector/config.ini
+      register: _detector_config
+
+    - name: Fail if detector config is missing
+      ansible.builtin.assert:
+        that: "_detector_config.stat.exists"
+        fail_msg: "/etc/beam_detector/config.ini does not exist"
+
+    - name: Assert detector data directory is present
+      ansible.builtin.stat:
+        path: /var/lib/beam_detector
+      register: _detector_data_dir
+
+    - name: Fail if detector data directory is missing
+      ansible.builtin.assert:
+        that:
+          - "_detector_data_dir.stat.exists"
+          - "_detector_data_dir.stat.isdir is defined and _detector_data_dir.stat.isdir"
+        fail_msg: "/var/lib/beam_detector does not exist or is not a directory"
+
+    - name: Assert beam-detector service is running and enabled
+      ansible.builtin.assert:
+        that:
+          - "ansible_facts.services['beam-detector.service'] is defined"
+          - "ansible_facts.services['beam-detector.service'].state == 'running'"
+          - "ansible_facts.services['beam-detector.service'].status == 'enabled'"
+        fail_msg: "beam-detector service is not running or not enabled"

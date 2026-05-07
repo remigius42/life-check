@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+# Managed by Ansible — do not edit manually
+[detector]
+gpio_pin = {{ detector_gpio_pin }}
+poll_interval_ms = {{ detector_poll_interval_ms }}
+gpio_init_retries = {{ detector_gpio_init_retries }}
+history_retention_days = {{ detector_history_retention_days }}
+test_mode_grace_period_s = {{ detector_test_mode_grace_period_s }}
+counts_path = {{ detector_counts_path }}
+state_path = {{ detector_state_path }}
+test_mode_sentinel = {{ detector_test_mode_sentinel }}

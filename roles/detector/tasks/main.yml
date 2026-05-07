@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: MIT
+---
+- name: Install python3-rpi.gpio
+  ansible.builtin.apt:
+    name: python3-rpi.gpio
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Create detector system group
+  ansible.builtin.group:
+    name: "{{ detector_group }}"
+    system: true
+    state: present
+  become: true
+
+- name: Create detector service user
+  ansible.builtin.user:
+    name: "{{ detector_service_user }}"
+    group: "{{ detector_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+  when: detector_service_user != 'root'
+
+- name: Create install directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ detector_install_dir }}"
+    - "{{ detector_install_dir }}/tests"
+    - "{{ detector_config_dir }}"
+  become: true
+
+- name: Create data directory
+  ansible.builtin.file:
+    path: "{{ detector_data_dir }}"
+    state: directory
+    owner: "{{ detector_service_user }}"
+    group: "{{ detector_group }}"
+    mode: "0750"
+  become: true
+
+- name: Deploy detector script
+  ansible.builtin.copy:
+    src: detector.py
+    dest: "{{ detector_install_dir }}/detector.py"
+    owner: "{{ detector_service_user }}"
+    mode: "0755"
+  become: true
+  notify: Restart beam-detector
+
+- name: Deploy test suite
+  ansible.builtin.copy:
+    src: tests/test_detector.py
+    dest: "{{ detector_install_dir }}/tests/test_detector.py"
+    owner: "{{ detector_service_user }}"
+    mode: "0644"
+  become: true
+
+- name: Deploy config from template
+  ansible.builtin.template:
+    src: config.ini.j2
+    dest: "{{ detector_config_dir }}/config.ini"
+    owner: "{{ detector_service_user }}"
+    group: "{{ detector_group }}"
+    mode: "0640"
+  become: true
+  notify: Restart beam-detector
+
+- name: Deploy systemd service unit
+  ansible.builtin.template:
+    src: beam-detector.service.j2
+    dest: /etc/systemd/system/beam-detector.service
+    owner: root
+    mode: "0644"
+  become: true
+  notify:
+    - Reload systemd
+    - Restart beam-detector
+
+- name: Enable and start beam-detector service
+  ansible.builtin.systemd:
+    name: beam-detector
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

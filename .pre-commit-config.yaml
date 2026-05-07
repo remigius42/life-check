@@ -79,6 +79,28 @@ repos:
         additional_dependencies:
           - ansible-core>=2.20
 
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        stages: [pre-commit]
+        files: \.py$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff
+        stages: [pre-commit]
+        files: \.py$
+        args: [--fix]
+
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.409
+    hooks:
+      - id: pyright
+        stages: [pre-commit]
+        files: \.py$
+
   - repo: local
     hooks:
       - id: openspec-validate
@@ -86,4 +108,12 @@ repos:
         entry: openspec validate --no-interactive --strict --all
         language: system
         pass_filenames: false
+        stages: [pre-commit]
+
+      - id: detector-unit-tests
+        name: Detector unit tests
+        entry: python3 -m unittest discover -s roles/detector/files/tests
+        language: system
+        pass_filenames: false
+        files: ^roles/detector/files/.*\.py$
         stages: [pre-commit]

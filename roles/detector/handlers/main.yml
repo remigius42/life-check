@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MIT
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart beam-detector
+  ansible.builtin.systemd:
+    name: beam-detector
+    state: restarted
