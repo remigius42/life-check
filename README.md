@@ -84,7 +84,8 @@ above the detection threshold).
 - Hardware wired as described above
 - Ansible 2.14+ on your control machine
 - Python 3.13+ with `ansible` and `ansible-lint` (see `pyproject.toml`)
-- A Slack incoming webhook URL (or any HTTP endpoint) for daily reports
+- A webhook URL for daily reports — see [NOTIFICATIONS.md](NOTIFICATIONS.md) for
+  Slack setup and alternatives
 
 ## Setup
 
@@ -265,6 +266,8 @@ The license notice is preserved in `roles/detector/files/static/pico-*.min.css`.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for local setup, running tests, linting,
 and the change workflow.
+
+See [NOTIFICATIONS.md](NOTIFICATIONS.md) for webhook setup (Slack, email, Telegram).
 
 ## Contributing
 
