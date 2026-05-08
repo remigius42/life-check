@@ -29,6 +29,7 @@ words:
   - pullup
   - pyflakes
   - pyproject
+  - raspberrypi
   - reflashing
   - remigius
   - rpi

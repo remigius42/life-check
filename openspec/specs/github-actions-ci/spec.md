@@ -50,15 +50,15 @@ dependencies from `requirements-dev.txt` before invoking pre-commit, so the
 - **WHEN** the CI workflow runs pre-commit
 - **THEN** `flask` is importable under Python 3.13 and the `detector-unit-tests` hook exits successfully
 
-### Requirement: DEVELOPMENT.md documents CI
+### Requirement: docs/development.md documents CI
 
-`DEVELOPMENT.md` SHALL contain a CI section describing: workflow triggers, the
-openspec npm install step and why it is needed, the Python deps install step and
-why it is needed, and the fork-filtering behavior.
+`docs/development.md` SHALL contain a CI section describing: workflow triggers,
+the openspec npm install step and why it is needed, the Python deps install step
+and why it is needed, and the fork-filtering behavior.
 
 #### Scenario: Developer can understand CI setup from docs
 
-- **WHEN** a developer reads `DEVELOPMENT.md`
+- **WHEN** a developer reads `docs/development.md`
 - **THEN** they understand what triggers CI, why openspec and Python deps are
   installed, and that fork PRs are excluded
 

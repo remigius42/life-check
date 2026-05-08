@@ -1,0 +1,230 @@
+<!-- cspell:ignore armhf avahi cmdline conv customisation dbus euxo -->
+
+<!-- cspell:ignore dtoverlayimage firstboot firstrun hotplug iface ifname -->
+
+<!-- cspell:ignore imager mgmt nmconnection nmcli nonint pinout pipefail -->
+
+<!-- cspell:ignore raspi raspios rfkill rootwait usermod trixie -->
+
+# Raspberry Pi Route
+
+## Parts list
+
+| Part                                                                                 | Notes                                                      |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Raspberry Pi (any model with GPIO)                                                   | Raspberry Pi OS Bookworm or later                          |
+| [DFRobot 5V IR Photoelectric Switch, 4 m](https://www.dfrobot.com/product-2644.html) | Break-beam sensor; separate transmitter and receiver       |
+| Logic level shifter, ≥ 1 channel                                                     | Required — receiver signal output is 5 V, Pi GPIO is 3.3 V |
+| 5 V power supply for the sensor                                                      | The Pi's 5 V GPIO rail is sufficient; sensor draws 30 mA   |
+
+## Wiring
+
+![Raspberry Pi wiring diagram](../wiring_rpi.svg)
+
+Wire the receiver blue wire through the logic shifter to **GPIO 17 (BCM), physical pin 11**
+(see [pinout.xyz](https://pinout.xyz/pinout/pin11_gpio17/) for the full 40-pin header reference).
+The receiver is NPN open-collector — a pull-up to 3.3V is required on the LV side of the shifter.
+Most BSS138-based shifter boards include pull-ups on both sides; the daemon also enables the Pi's
+internal pull-up (~50 kΩ) as a fallback. Use pin 9 (GND) and pin 2 or 4 (5 V) for sensor power.
+
+## Prerequisites
+
+- Raspberry Pi running Raspberry Pi OS Bookworm or later — download
+  [Raspberry Pi OS Lite](https://www.raspberrypi.com/software/operating-systems/);
+  Pi 1 / Pi Zero / Pi Zero W require the **32-bit** image (ARMv6); all others
+  support both, 64-bit recommended
+- Hardware wired as described above
+- Ansible 2.14+ on your control machine
+- Python 3.13+ with `ansible` and `ansible-lint` (see `pyproject.toml`)
+- A webhook URL for daily reports — see [notifications.md](notifications.md) for
+  Slack setup and alternatives
+
+## Models without ethernet (Pi Zero W, Pi Zero 2W, etc.)
+
+> **Applies to:** Pi Zero W, Pi Zero 2W, and any other Pi with WiFi but no
+> ethernet. For the Pi Zero (original, no WiFi), use USB gadget mode instead —
+> the Ansible steps are identical once you have SSH access.
+
+### Option A — [Raspberry Pi Imager](https://www.raspberrypi.com/software/) (recommended)
+
+Open **OS Customisation** (Ctrl+Shift+X) before flashing and fill in hostname,
+username/password, WiFi SSID/password, and enable SSH. Imager writes a
+`firstrun.sh` to the FAT32 `/boot/firmware/` partition automatically. Works
+from any OS.
+
+### Option B — Manual (`dd` + `firstrun.sh`)
+
+Flash the image with `dd` (replace `/dev/sdX` with your SD card device — check
+`lsblk` first):
+
+```bash
+dd if=2025-05-13-raspios-bookworm-armhf-lite.img of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+Then add two things to the FAT32 `/boot/firmware/` partition (readable and
+writable from any OS — no ext4 mounting required):
+
+**`/boot/firmware/firstrun.sh`** — edit the variables at the top:
+
+```bash
+#!/bin/bash
+exec > /var/log/firstrun.log 2>&1
+set -euxo pipefail
+
+readonly HOSTNAME="life-check"       # ← change; SSH via <hostname>.local (mDNS)
+readonly PI_USER="pi"                # ← change
+readonly PI_PASSWORD="YourPassword"  # ← change (same security caveats as WIFI_PSK)
+readonly WIFI_SSID="YourSSID"        # ← change
+readonly WIFI_PSK="YourWifiPassword" # ← change
+readonly WIFI_COUNTRY="CH"           # ← change (ISO 3166-1 alpha-2)
+readonly BOOT=/boot/firmware
+
+# hostnamectl requires dbus which is not up at this early boot stage
+echo "$HOSTNAME" > /etc/hostname
+sed -i "s/127\.0\.1\.1.*/127.0.1.1\t$HOSTNAME/" /etc/hosts
+
+# Trixie pre-creates pi with /usr/sbin/nologin; other usernames need useradd
+# No PAM complexity checks apply when run as root
+# gpio/i2c/spi groups exist on stock RPi OS but are created late — skip gracefully if missing
+if id "$PI_USER" &>/dev/null; then
+    usermod -s /bin/bash "$PI_USER"
+else
+    useradd -m -s /bin/bash "$PI_USER"
+fi
+usermod -aG sudo "$PI_USER"
+usermod -aG gpio,i2c,spi "$PI_USER" 2>/dev/null || true
+echo "$PI_USER:$PI_PASSWORD" | chpasswd
+
+rfkill unblock wifi
+raspi-config nonint do_wifi_country "$WIFI_COUNTRY"
+
+UUID=$(cat /proc/sys/kernel/random/uuid)
+mkdir -p /etc/NetworkManager/system-connections
+cat > /etc/NetworkManager/system-connections/preconfigured.nmconnection <<EOF
+[connection]
+id=${WIFI_SSID}
+uuid=${UUID}
+type=wifi
+
+[wifi]
+mode=infrastructure
+ssid=${WIFI_SSID}
+
+[wifi-security]
+auth-alg=open
+key-mgmt=wpa-psk
+psk=${WIFI_PSK}
+
+[ipv4]
+method=auto
+
+[ipv6]
+# UFW only allowlists IPv4; disable IPv6 to keep network config consistent
+method=disabled
+EOF
+chmod 600 /etc/NetworkManager/system-connections/preconfigured.nmconnection
+
+systemctl enable --now ssh
+
+sed -i 's| systemd\.run=[^ ]*||g; s| systemd\.run_success_action=[^ ]*||g; s| systemd\.run_failure_action=[^ ]*||g; s| systemd\.unit=[^ ]*||g' "$BOOT/cmdline.txt"
+# shred is ineffective on SD cards (wear-leveling); the password also persists in plaintext in
+# /etc/NetworkManager/system-connections/ on the root fs regardless
+rm -f "$BOOT/firstrun.sh"
+# log only removed on success; if it persists, check /var/log/firstrun.log for the failure
+rm -f /var/log/firstrun.log
+```
+
+**`/boot/firmware/cmdline.txt`** — append the following parameters to the
+existing single line (order is irrelevant; the file must remain one line;
+avoid duplicates):
+
+```text
+... rootwait systemd.run=/boot/firmware/firstrun.sh systemd.run_success_action=reboot systemd.run_failure_action=none systemd.unit=kernel-command-line.target quiet ...
+```
+
+On first boot the script runs as root, configures WiFi and SSH, then removes
+itself and the `systemd.run` entries from `cmdline.txt`. If something goes
+wrong, `/var/log/firstrun.log` persists on the root partition — mount the SD
+card on your host and read it to see exactly which command failed.
+
+> **`custom.toml`:** Bookworm also has experimental support for a `custom.toml`
+> file on `/boot/firmware/` as an alternative to `firstrun.sh` — see
+> [`firstboot`](https://github.com/RPi-Distro/raspberrypi-sys-mods/blob/432b34383c36db52df90f879b2d0b92177d9b2a3/usr/lib/raspberrypi-sys-mods/firstboot)
+> and
+> [`init_config`](https://github.com/RPi-Distro/raspberrypi-sys-mods/blob/432b34383c36db52df90f879b2d0b92177d9b2a3/usr/lib/raspberrypi-sys-mods/init_config)
+> in `raspberrypi-sys-mods`. It is explicitly unsupported and will be removed
+> when cloud-init lands.
+
+## Setup
+
+Before continuing, verify SSH works: `ssh <PI_USER>@<HOSTNAME>.local`
+(mDNS via avahi — replace with IP if mDNS is unavailable on your network).
+
+### 1. Clone the repository (on your control machine)
+
+```bash
+git clone https://github.com/remigius42/life-check
+cd life-check
+```
+
+### 2. Create your inventory
+
+```ini
+# inventory/hosts
+[raspi]
+life-check.local ansible_user=pi  # match HOSTNAME and PI_USER from firstrun.sh / Imager
+```
+
+### 3. Configure variables
+
+Copy or edit `group_vars/all/vars.yml`. The defaults are reasonable; at minimum
+set your LAN subnet:
+
+```yaml
+ufw_lan_subnet: "192.168.1.0/24"
+```
+
+### 4. Create the vault
+
+Secrets (webhook URLs) live in `group_vars/all/vault.yml`, encrypted with
+`ansible-vault`. Create a password file first:
+
+```bash
+echo 'your-vault-password' > .vault_pass
+chmod 600 .vault_pass
+```
+
+Fill in your webhook URLs in `group_vars/all/vault.yml`, then encrypt it:
+
+```bash
+ansible-vault encrypt group_vars/all/vault.yml
+```
+
+`.vault_pass` is already in `.gitignore`. Without it, `ansible-playbook` will
+refuse to run because `ansible.cfg` sets `vault_password_file = .vault_pass`.
+
+### 5. Run the playbook
+
+```bash
+ansible-playbook playbooks/site.yml --ask-pass
+```
+
+### 6. Verify
+
+```bash
+ansible-playbook playbooks/verify.yml --ask-pass
+```
+
+The verify playbook asserts expected post-state on the target host.
+
+## Ansible roles
+
+| Role                                      | Purpose                                                 |
+| ----------------------------------------- | ------------------------------------------------------- |
+| [`locales`](../roles/locales/README.md)   | Timezone and locale                                     |
+| [`ssh`](../roles/ssh/README.md)           | SSH hardening, optional key management                  |
+| [`ufw`](../roles/ufw/README.md)           | Firewall — allows SSH and the web UI port from LAN only |
+| [`fail2ban`](../roles/fail2ban/README.md) | Brute-force protection with optional Slack alerts       |
+| [`detector`](../roles/detector/README.md) | Break-beam daemon, daily reporter, web UI               |
+
+Each role has its own `README.md` with variable reference and example playbook.

@@ -43,7 +43,7 @@ Conventional Commits enforced by commitlint (`commitlint.config.js`). Examples:
 ```text
 feat: add beam-detector web UI
 fix: correct redirect status code to 303
-docs: update DEVELOPMENT.md
+docs: update docs/development.md
 ```
 
 ## CI
