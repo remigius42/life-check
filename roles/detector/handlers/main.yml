@@ -3,11 +3,13 @@
 - name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
+  become: true
 
 - name: Restart beam-detector
   ansible.builtin.systemd:
     name: beam-detector
     state: restarted
+  become: true
 
 - name: Restart beam-detector-report.timer
   ansible.builtin.systemd:

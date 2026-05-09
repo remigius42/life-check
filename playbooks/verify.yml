@@ -4,6 +4,8 @@
   hosts: all
   vars_files:
     - ../group_vars/all/vars.yml
+  vars:
+    ssh_service_name: "{{ 'ssh' if ansible_facts['os_family'] == 'Debian' else 'sshd' }}"
   tasks:
     - name: Assert locales package is installed
       ansible.builtin.package_facts:
@@ -177,11 +179,17 @@
           - "ansible_facts.services['beam-detector.service'].status == 'enabled'"
         fail_msg: "beam-detector service is not running or not enabled"
 
+    - name: Check beam-detector-report.timer is enabled
+      ansible.builtin.systemd:
+        name: beam-detector-report.timer
+        enabled: true
+      check_mode: true
+      become: true
+      register: _timer_check
+
     - name: Assert beam-detector-report.timer is enabled
       ansible.builtin.assert:
-        that:
-          - "ansible_facts.services['beam-detector-report.timer'] is defined"
-          - "ansible_facts.services['beam-detector-report.timer'].status == 'enabled'"
+        that: not _timer_check.changed
         fail_msg: "beam-detector-report.timer is not enabled"
 
     - name: Assert beam-detector-web service is running and enabled
