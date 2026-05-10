@@ -79,3 +79,8 @@ ESPHome discovers the device via mDNS and uploads wirelessly — no USB required
 Open the device's web UI at its IP address on port 80. All runtime settings
 (webhook URL, message templates, threshold, retry count) are editable there and
 survive reboots.
+
+The web UI also includes:
+
+- **Test Mode**: A switch to temporarily pause counting.
+- **Reset Today's Count**: A button to immediately clear the current daily crossing count.

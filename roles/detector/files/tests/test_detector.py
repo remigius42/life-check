@@ -35,6 +35,7 @@ def _make_detector(tmp_dir: str, gpio: FakeGpioPort, **cfg_overrides) -> BeamDet
         counts_path=Path(tmp_dir) / "counts.json",
         state_path=Path(tmp_dir) / "state.json",
         test_mode_sentinel=Path(tmp_dir) / "test_mode",
+        reset_count_sentinel=Path(tmp_dir) / "reset_count",
         **cfg_overrides,
     )
     return BeamDetector(cfg, gpio)
@@ -183,6 +184,62 @@ class TestTestMode(unittest.TestCase):
         )
         self._det.tick()
         self.assertTrue(self._sentinel.exists())
+
+
+class TestResetCount(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self._gpio = FakeGpioPort(state=True)  # HIGH = intact
+        self._det = _make_detector(self._tmp.name, self._gpio)
+        self._sentinel = Path(self._tmp.name) / "reset_count"
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_count_reset_via_sentinel(self):
+        self._gpio.state = False  # break
+        self._det.tick()
+        self.assertEqual(self._det._today_count, 1)
+
+        self._gpio.state = True
+        self._det.tick()
+
+        self._sentinel.touch()
+        self._det.tick()
+
+        self.assertEqual(self._det._today_count, 0)
+        self.assertFalse(self._sentinel.exists())
+        # Verify it was saved
+        counts = json.loads((Path(self._tmp.name) / "counts.json").read_text())
+        self.assertEqual(counts["today_count"], 0)
+
+    def test_breaks_ignored_during_reset_tick(self):
+        self._det._today_count = 5
+        self._sentinel.touch()
+        self._gpio.state = False  # break during the same tick as reset
+        # tick() calls _maybe_reset_count before edge detection
+        self._det.tick()
+
+        self.assertEqual(self._det._today_count, 0)
+        self.assertFalse(self._sentinel.exists())
+
+    def test_reset_sentinel_deletion_failure_retries(self):
+        import unittest.mock
+
+        self._det._today_count = 5
+        self._sentinel.touch()
+
+        with unittest.mock.patch("pathlib.Path.unlink", side_effect=OSError("busy")):
+            with self.assertLogs("detector", level="ERROR") as cm:
+                self._det.tick()
+            self.assertTrue(any("will retry" in msg for msg in cm.output))
+
+        self.assertEqual(self._det._today_count, 0)
+        self.assertTrue(self._sentinel.exists())
+
+        # Second tick should retry and succeed (if no patch)
+        self._det.tick()
+        self.assertFalse(self._sentinel.exists())
 
 
 class TestDailyReset(unittest.TestCase):

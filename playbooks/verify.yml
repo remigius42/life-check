@@ -200,3 +200,31 @@
           - "ansible_facts.services['beam-detector-web.service'].state == 'running'"
           - "ansible_facts.services['beam-detector-web.service'].status == 'enabled'"
         fail_msg: "beam-detector-web service is not running or not enabled"
+
+    - name: Read beam-detector-web.service unit file
+      ansible.builtin.slurp:
+        src: /etc/systemd/system/beam-detector-web.service
+      register: _web_service_unit
+      become: true
+
+    - name: Assert DETECTOR_RESET_SENTINEL is set in service
+      ansible.builtin.assert:
+        that: "(_web_service_unit.content | b64decode) is search('Environment=DETECTOR_RESET_SENTINEL=')"
+        fail_msg: "DETECTOR_RESET_SENTINEL environment variable not found in beam-detector-web.service"
+
+    - name: Fetch web UI index page
+      ansible.builtin.uri:
+        url: "http://localhost:{{ detector_web_port | default(8080) }}/"
+        return_content: true
+      register: _web_ui_index
+
+    - name: Assert Life Check branding and key UI elements
+      ansible.builtin.assert:
+        that:
+          - "_web_ui_index.content is search('<title>Life Check</title>')"
+          - "_web_ui_index.content is search('<h1>Life Check</h1>')"
+          - "_web_ui_index.content is search('id=\"reset-count\"')"
+          - "_web_ui_index.content is search('id=\"history\"')"
+          - "_web_ui_index.content is search('id=\"github-link\"')"
+          - "_web_ui_index.content is search('class=\"container\"')"
+        fail_msg: "Web UI is missing branding or key elements (Life Check title, reset-count ID, history ID, github-link ID, or container class)"

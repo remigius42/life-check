@@ -161,6 +161,15 @@ number:
     optimistic: true
     initial_value: 3
 
+button:
+  - platform: template
+    name: "Reset Today's Count"
+    id: reset_count_button
+    icon: "mdi:refresh"
+    on_press:
+      - lambda: 'id(today_count) = 0;'
+      - logger.log: "Today's count reset via web UI"
+
 switch:
   - platform: template
     name: "Test Mode"

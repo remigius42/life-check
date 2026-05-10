@@ -12,6 +12,7 @@ detector_run_dir: /run/beam_detector
 detector_counts_path: "{{ detector_data_dir }}/counts.json"
 detector_state_path: "{{ detector_run_dir }}/state.json"
 detector_test_mode_sentinel: "{{ detector_run_dir }}/test_mode"
+detector_reset_sentinel_path: "{{ detector_run_dir }}/reset_count"
 detector_service_user: root  # Stock Raspberry Pi OS pre Debian Bookwork requires root for GPIO
 detector_group: detector
 detector_report_user: beam-detector-report

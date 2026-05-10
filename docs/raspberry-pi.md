@@ -217,6 +217,19 @@ ansible-playbook playbooks/verify.yml --ask-pass
 
 The verify playbook asserts expected post-state on the target host.
 
+## Using the Web UI
+
+Access the "Life Check" dashboard at `http://<hostname>.local:8080/` (or your
+configured port).
+
+- **Current Status**: Shows real-time beam state and today's total crossings.
+- **Test Mode**: Click "Enable test mode" to perform maintenance without
+  counting crossings. It auto-reverts after 30 minutes (configurable).
+- **Manual Reset**: Click "Reset Today's Count" to immediately clear any
+  accidental triggers.
+- **History**: The dashboard displays a table of daily totals for the last 14
+  days.
+
 ## Ansible roles
 
 | Role                                      | Purpose                                                 |

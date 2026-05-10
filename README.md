@@ -18,7 +18,8 @@ monitored.
 
 - Counts daily break-beam crossings via a doorway sensor
 - Sends a daily webhook report with a configurable low-count alert
-- Exposes a small web UI for live status
+- Exposes a responsive **"Life Check" web UI** with live status (SSE), 14-day
+  history, test mode, and manual reset capability
 
 ## Deployment routes
 

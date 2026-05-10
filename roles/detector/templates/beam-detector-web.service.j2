@@ -13,9 +13,11 @@ Environment=DETECTOR_WEB_PORT={{ detector_web_port }}
 Environment=DETECTOR_STATE_PATH={{ detector_state_path }}
 Environment=DETECTOR_SENTINEL={{ detector_test_mode_sentinel }}
 Environment=DETECTOR_COUNTS_PATH={{ detector_counts_path }}
-Environment=DETECTOR_STATIC_DIR={{ detector_install_dir }}/static
-Environment=DETECTOR_PICO_CSS=pico-{{ detector_pico_version }}.min.css
+Environment=DETECTOR_STATIC_DIR="{{ detector_install_dir }}/static"
+Environment=DETECTOR_PICO_CSS="pico-{{ detector_pico_version }}.min.css"
+Environment=DETECTOR_RESET_SENTINEL="{{ detector_reset_sentinel_path }}"
 Restart=on-failure
+
 
 [Install]
 WantedBy=multi-user.target

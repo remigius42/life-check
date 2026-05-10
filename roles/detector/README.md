@@ -35,6 +35,7 @@ None.
 | `detector_counts_path`              | `{{ detector_data_dir }}/counts.json` | Daily break-count history file                                                                                                                    |
 | `detector_state_path`               | `{{ detector_run_dir }}/state.json`   | Live state IPC file (written every poll tick)                                                                                                     |
 | `detector_test_mode_sentinel`       | `{{ detector_run_dir }}/test_mode`    | Sentinel file that activates test mode                                                                                                            |
+| `detector_reset_sentinel_path`      | `{{ detector_run_dir }}/reset_count`  | Sentinel file that triggers a count reset                                                                                                         |
 | `detector_service_user`             | `root`                                | OS user that runs the service (see note below)                                                                                                    |
 | `detector_group`                    | `detector`                            | System group for IPC — daemon and reporter run in this group                                                                                      |
 | `detector_report_user`              | `beam-detector-report`                | OS user that runs the reporter oneshot service                                                                                                    |
@@ -57,10 +58,10 @@ After the role runs, the status page is available at:
 http://<host>:<detector_web_port>/
 ```
 
-The page shows live beam state, today's break count (updated via SSE), and a test-mode toggle
-button. It is served by a dedicated system user (`detector_web_user`, default `beam-detector-web`)
-with no shell and minimal filesystem access. UFW restricts access to `ufw_lan_subnet` only — no
-authentication is required within the LAN.
+The page shows live beam state, today's break count (updated via SSE), a 14-day history table,
+a test-mode toggle, and a reset button. It is served by a dedicated system user
+(`detector_web_user`, default `beam-detector-web`) with no shell and minimal filesystem access.
+UFW restricts access to `ufw_lan_subnet` only — no authentication is required within the LAN.
 
 Relevant variables: `detector_web_port`, `detector_web_user`, `detector_pico_version` (see table
 above).

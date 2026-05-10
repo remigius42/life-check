@@ -88,6 +88,7 @@ class Config:
     counts_path: Path = Path("/var/lib/beam_detector/counts.json")
     state_path: Path = Path("/run/beam_detector/state.json")
     test_mode_sentinel: Path = Path("/run/beam_detector/test_mode")
+    reset_count_sentinel: Path = Path("/run/beam_detector/reset_count")
 
     @classmethod
     def from_file(cls, path: str = "/etc/beam_detector/config.ini") -> "Config":
@@ -111,6 +112,9 @@ class Config:
             counts_path=Path(s.get("counts_path", d.counts_path)),
             state_path=Path(s.get("state_path", d.state_path)),
             test_mode_sentinel=Path(s.get("test_mode_sentinel", d.test_mode_sentinel)),
+            reset_count_sentinel=Path(
+                s.get("reset_count_sentinel", d.reset_count_sentinel)
+            ),
         )
 
 
@@ -132,8 +136,10 @@ class BeamDetector:
     def tick(self) -> None:
         self._maybe_roll_day()
         self._maybe_revert_test_mode()
+        reset_iteration = self._maybe_reset_count()
         current_state = self._gpio.read()
-        if not current_state and self._pin_state:  # falling edge — beam blocked
+        if not current_state and self._pin_state and not reset_iteration:
+            # falling edge — beam blocked
             self._on_break()
         self._pin_state = current_state
         self._write_state()
@@ -185,6 +191,31 @@ class BeamDetector:
                     # timer preserved — retry on next tick
         else:
             self._test_mode_entered_at = None
+
+    def _maybe_reset_count(self) -> bool:
+        """Check for reset sentinel and reset today's count.
+        Returns True if a reset was performed in this iteration."""
+        if self._cfg.reset_count_sentinel.exists():
+            if self._today_count != 0:
+                self._today_count = 0
+                _log.info(
+                    "Today's count reset via sentinel %s",
+                    self._cfg.reset_count_sentinel,
+                )
+                self._save()
+            try:
+                self._cfg.reset_count_sentinel.unlink()
+                return True
+            except FileNotFoundError:
+                return True
+            except OSError as exc:
+                _log.error(
+                    "Failed to remove reset sentinel %s: %s — will retry",
+                    self._cfg.reset_count_sentinel,
+                    exc,
+                )
+                return True
+        return False
 
     def _on_break(self) -> None:
         if self._cfg.test_mode_sentinel.exists():

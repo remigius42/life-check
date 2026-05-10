@@ -39,6 +39,7 @@ words:
   - shellcheck
   - sntp
   - stdlib
+  - targetable
   - timedatectl
   - tmpfs
   - toctou
