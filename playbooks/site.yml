@@ -5,6 +5,7 @@
   become: true
   vars_files:
     - ../group_vars/all/vars.yml
+    - ../group_vars/all/vault.yml
   roles:
     - locales
     - ssh

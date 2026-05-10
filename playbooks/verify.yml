@@ -4,6 +4,7 @@
   hosts: all
   vars_files:
     - ../group_vars/all/vars.yml
+    - ../group_vars/all/vault.yml
   vars:
     ssh_service_name: "{{ 'ssh' if ansible_facts['os_family'] == 'Debian' else 'sshd' }}"
   tasks:
