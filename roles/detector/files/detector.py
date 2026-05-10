@@ -133,7 +133,7 @@ class BeamDetector:
         self._maybe_roll_day()
         self._maybe_revert_test_mode()
         current_state = self._gpio.read()
-        if current_state and not self._pin_state:  # rising edge only
+        if not current_state and self._pin_state:  # falling edge — beam blocked
             self._on_break()
         self._pin_state = current_state
         self._write_state()
@@ -278,8 +278,9 @@ class BeamDetector:
     def _write_state(self) -> None:
         payload = json.dumps(
             {
-                # Pull-up wiring: HIGH (True) = beam broken, LOW (False) = beam intact
-                "beam_broken": self._pin_state,
+                # NPN open-collector + pull-up: LOW (False) = beam broken,
+                # HIGH (True) = beam intact
+                "beam_broken": not self._pin_state,
                 "today_count": self._today_count,
                 "test_mode": self._cfg.test_mode_sentinel.exists(),
             }

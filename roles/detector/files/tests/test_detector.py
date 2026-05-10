@@ -43,42 +43,42 @@ def _make_detector(tmp_dir: str, gpio: FakeGpioPort, **cfg_overrides) -> BeamDet
 class TestBreakCounting(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
-        self._gpio = FakeGpioPort()
+        self._gpio = FakeGpioPort(state=True)  # HIGH = intact
         self._det = _make_detector(self._tmp.name, self._gpio)
 
     def tearDown(self):
         self._tmp.cleanup()
 
     def test_no_phantom_break_when_beam_already_broken_at_startup(self):
-        gpio = FakeGpioPort(state=True)
+        gpio = FakeGpioPort(state=False)  # LOW = broken
         det = _make_detector(self._tmp.name, gpio)
         det.tick()
         self.assertEqual(det._today_count, 0)
 
-    def test_single_rising_edge_registers_one_break(self):
-        self._gpio.state = True
+    def test_single_falling_edge_registers_one_break(self):
+        self._gpio.state = False  # beam broken (LOW)
         self._det.tick()
         self.assertEqual(self._det._today_count, 1)
 
-    def test_sustained_high_does_not_re_register(self):
-        self._gpio.state = True
-        self._det.tick()
-        self._det.tick()
-        self._det.tick()
-        self.assertEqual(self._det._today_count, 1)
-
-    def test_two_breaks_separated_by_low(self):
-        self._gpio.state = True
-        self._det.tick()
+    def test_sustained_low_does_not_re_register(self):
         self._gpio.state = False
         self._det.tick()
-        self._gpio.state = True
+        self._det.tick()
+        self._det.tick()
+        self.assertEqual(self._det._today_count, 1)
+
+    def test_two_breaks_separated_by_high(self):
+        self._gpio.state = False  # first break
+        self._det.tick()
+        self._gpio.state = True  # restore
+        self._det.tick()
+        self._gpio.state = False  # second break
         self._det.tick()
         self.assertEqual(self._det._today_count, 2)
 
     def test_state_json_written_on_tick(self):
         state_path = Path(self._tmp.name) / "state.json"
-        self._gpio.state = True
+        self._gpio.state = False  # beam broken (LOW)
         self._det.tick()
         data = json.loads(state_path.read_text())
         self.assertTrue(data["beam_broken"])
@@ -89,7 +89,7 @@ class TestBreakCounting(unittest.TestCase):
 class TestTestMode(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
-        self._gpio = FakeGpioPort()
+        self._gpio = FakeGpioPort(state=True)  # HIGH = intact
         self._det = _make_detector(self._tmp.name, self._gpio)
         self._sentinel = Path(self._tmp.name) / "test_mode"
 
@@ -98,18 +98,18 @@ class TestTestMode(unittest.TestCase):
 
     def test_break_not_counted_in_test_mode(self):
         self._sentinel.touch()
-        self._gpio.state = True
+        self._gpio.state = False  # beam broken (LOW)
         self._det.tick()
         self.assertEqual(self._det._today_count, 0)
 
     def test_break_counted_after_sentinel_removed(self):
         self._sentinel.touch()
-        self._gpio.state = True
+        self._gpio.state = False  # broken in test mode — not counted
         self._det.tick()
         self._sentinel.unlink()
-        self._gpio.state = False
+        self._gpio.state = True  # restore
         self._det.tick()
-        self._gpio.state = True
+        self._gpio.state = False  # broken again, sentinel gone
         self._det.tick()
         self.assertEqual(self._det._today_count, 1)
 
@@ -145,7 +145,7 @@ class TestTestMode(unittest.TestCase):
             self.assertTrue(self._sentinel.exists())
             self.assertIsNotNone(det._test_mode_entered_at)
             # next break must not be counted (mock active; sentinel still exists)
-            self._gpio.state = True
+            self._gpio.state = False
             det.tick()
             self.assertEqual(det._today_count, 0)
 
@@ -188,21 +188,21 @@ class TestTestMode(unittest.TestCase):
 class TestDailyReset(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
-        self._gpio = FakeGpioPort()
+        self._gpio = FakeGpioPort(state=True)  # HIGH = intact
         self._det = _make_detector(self._tmp.name, self._gpio)
 
     def tearDown(self):
         self._tmp.cleanup()
 
     def test_roll_day_archives_and_resets_count(self):
-        self._gpio.state = True
+        self._gpio.state = False  # beam broken
         self._det.tick()
         self.assertEqual(self._det._today_count, 1)
 
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
         self._det._current_date = yesterday
 
-        self._gpio.state = False
+        self._gpio.state = True  # restore
         self._det.tick()
 
         self.assertEqual(self._det._today_count, 0)
@@ -210,26 +210,26 @@ class TestDailyReset(unittest.TestCase):
         self.assertEqual(self._det._history[yesterday.isoformat()], 1)
 
     def test_no_rollover_on_backward_clock_jump(self):
-        self._gpio.state = True
+        self._gpio.state = False  # beam broken
         self._det.tick()
         self.assertEqual(self._det._today_count, 1)
         # Simulate clock jumping forward then being corrected back (NTP slew)
         tomorrow = datetime.date.today() + datetime.timedelta(days=1)
         self._det._current_date = tomorrow
-        self._gpio.state = False
+        self._gpio.state = True  # restore
         self._det.tick()
         # today < _current_date — must NOT roll back, counter preserved
         self.assertEqual(self._det._today_count, 1)
         self.assertEqual(self._det._current_date, tomorrow)
 
     def test_forward_clock_jump_single_rollover_no_backfill(self):
-        self._gpio.state = True
+        self._gpio.state = False  # beam broken
         self._det.tick()
         self.assertEqual(self._det._today_count, 1)
         # Jump _current_date back three days to simulate clock jumping forward 3 days
         three_days_ago = datetime.date.today() - datetime.timedelta(days=3)
         self._det._current_date = three_days_ago
-        self._gpio.state = False
+        self._gpio.state = True  # restore
         self._det.tick()
         # One rollover: three_days_ago archived, counter reset; no intermediate backfill
         self.assertEqual(self._det._today_count, 0)
@@ -244,7 +244,7 @@ class TestDailyReset(unittest.TestCase):
 class TestHistoryRetention(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
-        self._gpio = FakeGpioPort()
+        self._gpio = FakeGpioPort(state=True)  # HIGH = intact
         self._det = _make_detector(self._tmp.name, self._gpio, history_retention_days=3)
 
     def tearDown(self):
@@ -257,7 +257,7 @@ class TestHistoryRetention(unittest.TestCase):
         self._det._history[old_date] = 5
         self._det._history[recent_date] = 3
 
-        self._gpio.state = True
+        self._gpio.state = False  # beam broken (LOW)
         self._det.tick()
 
         counts = json.loads((Path(self._tmp.name) / "counts.json").read_text())
@@ -273,17 +273,17 @@ class TestPersistence(unittest.TestCase):
         self._tmp.cleanup()
 
     def test_today_count_survives_restart(self):
-        gpio = FakeGpioPort()
+        gpio = FakeGpioPort(state=True)  # start intact
         det = _make_detector(self._tmp.name, gpio)
-        gpio.state = True
+        gpio.state = False  # break 1
         det.tick()
-        gpio.state = False
+        gpio.state = True  # restore
         det.tick()
-        gpio.state = True
+        gpio.state = False  # break 2
         det.tick()
         self.assertEqual(det._today_count, 2)
 
-        gpio2 = FakeGpioPort()
+        gpio2 = FakeGpioPort(state=True)
         det2 = _make_detector(self._tmp.name, gpio2)
         self.assertEqual(det2._today_count, 2)
 
@@ -423,9 +423,9 @@ class TestPersistence(unittest.TestCase):
     def test_save_failure_does_not_crash(self):
         import unittest.mock
 
-        gpio = FakeGpioPort()
+        gpio = FakeGpioPort(state=True)  # start intact
         det = _make_detector(self._tmp.name, gpio)
-        gpio.state = True
+        gpio.state = False  # beam broken
         with unittest.mock.patch("os.replace", side_effect=OSError("disk full")):
             det.tick()  # must not raise
         self.assertEqual(det._today_count, 1)  # in-memory state preserved

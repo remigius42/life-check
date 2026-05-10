@@ -10,24 +10,24 @@ The daemon SHALL poll the GPIO pin every 50 ms (configurable via `detector_poll_
 - **WHEN** one poll interval elapses
 - **THEN** `state.json` is rewritten with current values regardless of whether state changed
 
-### Requirement: Rising-edge beam-break detection
-The daemon SHALL detect beam-break events by monitoring GPIO pin 17 (BCM, configurable via `detector_gpio_pin`) for LOW→HIGH transitions. The pin SHALL be configured with a pull-up resistor (`GPIO.PUD_UP`). On daemon startup, the initial `previous_state` SHALL be set to the first sampled GPIO value; no break event SHALL be emitted for this initial sample. Only subsequent LOW→HIGH transitions (edge detection beginning from the second poll onward) constitute break events. Sustained HIGH SHALL NOT generate additional events.
+### Requirement: Falling-edge beam-break detection
+The daemon SHALL detect beam-break events by monitoring GPIO pin 17 (BCM, configurable via `detector_gpio_pin`) for HIGH→LOW transitions. The sensor is NPN open-collector with a pull-up: HIGH = beam intact (transistor off), LOW = beam broken (transistor on). The pin SHALL be configured with a pull-up resistor (`GPIO.PUD_UP`). On daemon startup, the initial `previous_state` SHALL be set to the first sampled GPIO value; no break event SHALL be emitted for this initial sample. Only subsequent HIGH→LOW transitions (edge detection beginning from the second poll onward) constitute break events. Sustained LOW SHALL NOT generate additional events.
 
 #### Scenario: Single break event
-- **WHEN** the GPIO pin transitions from LOW to HIGH
+- **WHEN** the GPIO pin transitions from HIGH to LOW
 - **THEN** exactly one break event is registered
 
 #### Scenario: Sustained beam broken
-- **WHEN** the GPIO pin is HIGH for multiple consecutive polls
+- **WHEN** the GPIO pin is LOW for multiple consecutive polls
 - **THEN** only one break event is registered (the initial transition)
 
 #### Scenario: Beam restored then broken again
-- **WHEN** the GPIO pin goes HIGH, returns to LOW, then goes HIGH again
+- **WHEN** the GPIO pin goes LOW, returns to HIGH, then goes LOW again
 - **THEN** two break events are registered in total
 
 #### Scenario: Daemon starts with beam already broken
-- **WHEN** the daemon initializes and the GPIO pin is already HIGH
-- **THEN** no break event is registered until the pin returns to LOW and then goes HIGH again
+- **WHEN** the daemon initializes and the GPIO pin is already LOW
+- **THEN** no break event is registered until the pin returns to HIGH and then goes LOW again
 
 ### Requirement: Daily break counter
 The daemon SHALL maintain a per-day break counter that increments on each break event (when not in test mode). The counter SHALL reset to zero when the calendar date changes in the system's configured local timezone (detected by comparing the stored date string `YYYY-MM-DD` against today's date via `datetime.date.today()`, which uses the system local timezone, on each poll tick). Both the stored date and "today" are always interpreted in that same timezone. Date-string comparison is inherently DST-safe: spring-forward and fall-back do not affect the rollover because no wall-clock arithmetic is involved.
