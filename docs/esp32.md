@@ -1,4 +1,4 @@
-<!-- cspell:ignore wroom -->
+<!-- cspell:ignore fuchsr purecrea wroom -->
 
 # ESP32 Route
 
@@ -12,8 +12,8 @@
 | 20 kΩ resistor                                                                       | Pull-down from GPIO to GND; together with 10 kΩ forms voltage divider |
 
 A passive resistor divider (10 kΩ + 20 kΩ) handles level shifting from the sensor's
-5 V signal to the ESP32's 3.3 V GPIO — no separate level shifter board is needed. A BSS138 active
-level shifter also works if you prefer it.
+5 V signal to the ESP32's 3.3 V GPIO — no separate level shifter board is needed. An active
+level shifter (e.g., a BSS138-based module like the "Purecrea 2-channel converter") also works if you prefer it.
 
 ## Wiring
 
@@ -24,6 +24,17 @@ resistor divider (10 kΩ series + 20 kΩ to GND) to **GPIO 4** — WROOM DevKit 
 S3-DevKitC-1 J1 pin 4. Do **not** enable the internal pull-up on the GPIO
 (the divider acts as the pull-up; enabling the internal pull-up raises the LOW voltage to ~0.94 V,
 above the detection threshold).
+
+## 3D Printed Housing
+
+To protect the ESP32 from dust and accidental shorts, a 3D-printed enclosure is recommended. We
+recommend the **[ESP32 WROOM Case](https://makerworld.com/en/models/1891997)** by
+**[fuchsr](https://makerworld.com/en/@fuchsr)** on MakerWorld.
+
+This specific model is a perfect fit for the 30-pin DevKit v1 used in this project. We have chosen
+to link directly to the author's page rather than vendoring the file to ensure the creator
+receives proper credit and traffic for their work. See [hardware/3d/README.md](../hardware/3d/README.md)
+for our full hardware philosophy.
 
 ## Prerequisites
 

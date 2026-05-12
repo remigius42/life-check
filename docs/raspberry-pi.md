@@ -4,18 +4,20 @@
 
 <!-- cspell:ignore imager mgmt nmconnection nmcli nonint pinout pipefail -->
 
-<!-- cspell:ignore raspi raspios rfkill rootwait usermod trixie -->
+<!-- cspell:ignore purecrea raspi raspios rfkill rootwait romakev usermod -->
+
+<!-- cspell:ignore trixie -->
 
 # Raspberry Pi Route
 
 ## Parts list
 
-| Part                                                                                 | Notes                                                      |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Raspberry Pi (any model with GPIO)                                                   | Raspberry Pi OS Bookworm or later                          |
-| [DFRobot 5V IR Photoelectric Switch, 4 m](https://www.dfrobot.com/product-2644.html) | Break-beam sensor; separate transmitter and receiver       |
-| Logic level shifter, ≥ 1 channel                                                     | Required — receiver signal output is 5 V, Pi GPIO is 3.3 V |
-| 5 V power supply for the sensor                                                      | The Pi's 5 V GPIO rail is sufficient; sensor draws 30 mA   |
+| Part                                                                                 | Notes                                                                                                                            |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Raspberry Pi (any model with GPIO)                                                   | Raspberry Pi OS Bookworm or later                                                                                                |
+| [DFRobot 5V IR Photoelectric Switch, 4 m](https://www.dfrobot.com/product-2644.html) | Break-beam sensor; separate transmitter and receiver                                                                             |
+| Logic level shifter, ≥ 1 channel                                                     | Required (e.g., a BSS138-based module like the "Purecrea 2-channel converter") — receiver signal output is 5 V, Pi GPIO is 3.3 V |
+| 5 V power supply for the sensor                                                      | The Pi's 5 V GPIO rail is sufficient; sensor draws 30 mA                                                                         |
 
 ## Wiring
 
@@ -26,6 +28,26 @@ Wire the receiver blue wire through the logic shifter to **GPIO 17 (BCM), physic
 The receiver is NPN open-collector — a pull-up to 3.3V is required on the LV side of the shifter.
 Most BSS138-based shifter boards include pull-ups on both sides; the daemon also enables the Pi's
 internal pull-up (~50 kΩ) as a fallback. Use pin 9 (GND) and pin 2 or 4 (5 V) for sensor power.
+
+## 3D Printed Housing
+
+A parametric housing for the logic level shifter is available in
+[`hardware/3d/level-shifter-case.scad`](../hardware/3d/level-shifter-case.scad).
+The model is a configured version of the [Parametric Project
+Box](https://makerworld.com/en/models/46852) by
+[Matthew](https://makerworld.com/en/@Matthew) on MakerWorld.
+
+It is an [OpenSCAD](https://openscad.org/) file, allowing you to customize the
+dimensions and wall thickness if you use a different board. The vendored version
+is pre-configured with internal dimensions (30x13.5x30mm) suitable for a
+standard 4-channel BSS138 module and its Dupont connectors.
+
+For the Raspberry Pi Zero itself, we recommend the **[Slim Snap-Fit
+Case](https://makerworld.com/en/models/548199)** by
+**[Romakev](https://makerworld.com/en/@Romakev)** on MakerWorld.
+
+See [hardware/3d/README.md](../hardware/3d/README.md) for our full hardware
+philosophy.
 
 ## Prerequisites
 
