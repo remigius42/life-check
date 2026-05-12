@@ -4,6 +4,8 @@
 
 ## Parts list
 
+See the **[Full BOM](../hardware/BOM.md)** for assembly materials and tools.
+
 | Part                                                                                 | Notes                                                                 |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
 | ESP32 dev board (WROOM DevKit v1 or S3 DevKit)                                       | Any ESP32 with a free GPIO works                                      |

@@ -12,6 +12,8 @@
 
 ## Parts list
 
+See the **[Full BOM](../hardware/BOM.md)** for assembly materials and tools.
+
 | Part                                                                                 | Notes                                                                                                                            |
 | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | Raspberry Pi (any model with GPIO)                                                   | Raspberry Pi OS Bookworm or later                                                                                                |
