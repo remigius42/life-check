@@ -17,7 +17,7 @@ See the **[Full BOM](../hardware/BOM.md)** for assembly materials and tools.
 
 ## Wiring
 
-![Raspberry Pi wiring diagram](../wiring_rpi.svg)
+![Raspberry Pi wiring diagram](wiring_rpi.svg)
 
 Wire the receiver blue wire through the logic shifter to **GPIO 17 (BCM), physical pin 11**
 (see [pinout.xyz](https://pinout.xyz/pinout/pin11_gpio17/) for the full 40-pin header reference).

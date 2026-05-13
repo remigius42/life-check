@@ -19,7 +19,7 @@ level shifter (e.g., a BSS138-based module like the "Purecrea 2-channel converte
 
 ## Wiring
 
-![ESP32 wiring diagram](../wiring_esphome.svg)
+![ESP32 wiring diagram](wiring_esphome.svg)
 
 Wire sensor power from the board's **VBUS (5 V)** pin. Connect the receiver signal through the
 resistor divider (10 kΩ series + 20 kΩ to GND) to **GPIO 4** — WROOM DevKit v1 physical pin 26,
