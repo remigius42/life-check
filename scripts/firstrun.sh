@@ -1,5 +1,5 @@
 #!/bin/bash
-# cspell:ignore cmdline firstrun mgmt nmconnection nonint raspi rfkill trixie
+# spellchecker:ignore cmdline firstrun mgmt nmconnection nonint raspi rfkill trixie
 exec > /var/log/firstrun.log 2>&1
 set -euxo pipefail
 

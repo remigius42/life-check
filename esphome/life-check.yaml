@@ -1,4 +1,4 @@
-# cspell:ignore esphome npos pullup sntp tmpl useragent
+# spellchecker:ignore esphome npos pullup sntp tmpl useragent
 esphome:
   name: life-check
   min_version: "2024.6.0"

@@ -1,4 +1,4 @@
-<!-- cspell:ignore fuchsr purecrea wroom -->
+<!-- spellchecker:ignore fuchsr purecrea wroom -->
 
 # ESP32 Route
 

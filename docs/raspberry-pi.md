@@ -1,6 +1,6 @@
-<!-- cspell:ignore armhf avahi cmdline conv customisation firstboot firstrun -->
+<!-- spellchecker:ignore armhf avahi cmdline conv customisation firstboot firstrun -->
 
-<!-- cspell:ignore imager pinout purecrea raspi raspios rootwait romakev -->
+<!-- spellchecker:ignore imager pinout purecrea raspi raspios rootwait romakev -->
 
 # Raspberry Pi Route
 

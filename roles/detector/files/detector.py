@@ -158,7 +158,7 @@ class BeamDetector:
 
     def _handle_signal(
         self, _signum: int, _frame: types.FrameType | None
-    ) -> None:  # cspell: ignore signum
+    ) -> None:  # spellchecker: ignore signum
         self._running = False
 
     def _maybe_roll_day(self) -> None:
