@@ -15,6 +15,9 @@
 # ESPHome secrets (contains WiFi credentials, OTA password, webhook URL)
 esphome/secrets.yaml
 
+# Ansible inventory (contains host addresses — copy from inventory/hosts.example)
+inventory/hosts
+
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,ansible,visualstudiocode,vim,linux,macos
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,ansible,visualstudiocode,vim,linux,macos

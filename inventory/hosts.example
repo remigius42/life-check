@@ -1,0 +1,5 @@
+# spellchecker:ignore firstrun imager raspi
+[raspi]
+# match HOSTNAME and PI_USER from scripts/firstrun.sh / Imager
+# ansible_connection_address_family=ipv4 forces IPv4 — .local mDNS can resolve to IPv6
+life-check.local ansible_user=pi ansible_connection_address_family=ipv4

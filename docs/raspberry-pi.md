@@ -120,11 +120,8 @@ cd life-check
 
 ### 2. Create your inventory
 
-```ini
-# inventory/hosts
-[raspi]
-life-check.local ansible_user=pi  # match HOSTNAME and PI_USER from firstrun.sh / Imager
-```
+Copy `inventory/hosts.example` to `inventory/hosts` and edit the hostname and
+username to match your `firstrun.sh` / Imager settings.
 
 ### 3. Configure variables
 
