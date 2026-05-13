@@ -1,30 +1,23 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+default_stages: [pre-commit]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        stages: [pre-commit]
       - id: end-of-file-fixer
-        stages: [pre-commit]
       - id: check-yaml
-        stages: [pre-commit]
         args: [--unsafe]  # Allow custom YAML tags used by Ansible
       - id: check-added-large-files
-        stages: [pre-commit]
       - id: check-merge-conflict
-        stages: [pre-commit]
       - id: check-case-conflict
-        stages: [pre-commit]
       - id: mixed-line-ending
-        stages: [pre-commit]
 
   - repo: https://github.com/hukkin/mdformat
     rev: 1.0.0
     hooks:
       - id: mdformat
-        stages: [pre-commit]
         # currently, all content in .claude, .gemini and .opencode is vendored
         # openspec contains files which are sensitive to formatting, eg. keywords
         # must appear on the first lines of requirements.
@@ -36,31 +29,26 @@ repos:
     rev: v0.47.0
     hooks:
       - id: markdownlint
-        stages: [pre-commit]
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
     rev: v9.6.0
     hooks:
       - id: cspell
-        stages: [pre-commit]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        stages: [pre-commit]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.37.1
     hooks:
       - id: check-github-workflows
-        stages: [pre-commit]
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.0
     hooks:
       - id: gitleaks
-        stages: [pre-commit]
 
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
     rev: v9.24.0
@@ -74,7 +62,6 @@ repos:
     rev: v26.1.1
     hooks:
       - id: ansible-lint
-        stages: [pre-commit]
         files: \.(yaml|yml)$
         exclude: ^esphome/
         additional_dependencies:
@@ -84,14 +71,12 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-        stages: [pre-commit]
         files: \.py$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.12
     hooks:
       - id: ruff
-        stages: [pre-commit]
         files: \.py$
         args: [--fix]
 
@@ -99,7 +84,6 @@ repos:
     rev: v1.1.409
     hooks:
       - id: pyright
-        stages: [pre-commit]
         files: \.py$
 
   - repo: local
@@ -109,7 +93,6 @@ repos:
         entry: npx --yes @fission-ai/openspec validate --no-interactive --strict --all
         language: system
         pass_filenames: false
-        stages: [pre-commit]
 
       - id: detector-unit-tests
         name: Detector unit tests
@@ -117,7 +100,6 @@ repos:
         language: system
         pass_filenames: false
         files: ^roles/detector/files/.*\.py$
-        stages: [pre-commit]
 
       - id: esphome-config-validate
         name: ESPHome config validate
@@ -125,4 +107,3 @@ repos:
         language: system
         pass_filenames: false
         files: ^esphome/
-        stages: [pre-commit]
