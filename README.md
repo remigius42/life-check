@@ -14,6 +14,12 @@ report flags when the count is unusually low, giving family or caregivers a quie
 signal without cameras, wearables, or any required action from the person being
 monitored.
 
+![Life Check web UI — Raspberry Pi route](docs/raspberry-pi-web-ui.png)
+
+*The web UI is a setup and monitoring aid. Day-to-day, the system runs
+silently and family members receive a low-count alert via webhook — no app
+or login required.*
+
 ## What it does
 
 - Counts daily break-beam crossings via a doorway sensor
