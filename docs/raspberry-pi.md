@@ -142,11 +142,22 @@ echo 'your-vault-password' > .vault_pass
 chmod 600 .vault_pass
 ```
 
-Fill in your webhook URLs in `group_vars/all/vault.yml`, then encrypt it:
+The repo ships with an encrypted vault — replace it with your own (this opens
+`$EDITOR`; fill in your webhook URLs and save):
 
 ```bash
-ansible-vault encrypt group_vars/all/vault.yml
+rm group_vars/all/vault.yml
+ansible-vault create group_vars/all/vault.yml
 ```
+
+The vault must contain:
+
+```yaml
+vault_fail2ban_slack_webhook_url: "https://hooks.slack.com/..."
+vault_detector_report_webhook_url: "https://hooks.slack.com/..."
+```
+
+Omit any variables you don't need.
 
 `.vault_pass` is already in `.gitignore`. Without it, `ansible-playbook` will
 refuse to run because `ansible.cfg` sets `vault_password_file = .vault_pass`.
