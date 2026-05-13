@@ -1,4 +1,4 @@
-<!-- spellchecker:ignore fuchsr purecrea wroom -->
+<!-- spellchecker:ignore memaddog purecrea wroom -->
 
 # ESP32 Route
 
@@ -31,7 +31,7 @@ above the detection threshold).
 
 To protect the ESP32 from dust and accidental shorts, a 3D-printed enclosure is recommended. We
 recommend the **[ESP32 WROOM Case](https://makerworld.com/en/models/1891997)** by
-**[fuchsr](https://makerworld.com/en/@fuchsr)** on MakerWorld.
+**[MeMaddog](https://makerworld.com/en/@memaddog)** on MakerWorld.
 
 This specific model is a perfect fit for the 30-pin DevKit v1 used in this project. We have chosen
 to link directly to the author's page rather than vendoring the file to ensure the creator

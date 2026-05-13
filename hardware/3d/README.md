@@ -1,4 +1,4 @@
-<!-- spellchecker: ignore fuchsr romakev -->
+<!-- spellchecker: ignore memaddog romakev -->
 
 # Hardware Models
 
@@ -19,11 +19,11 @@ models follows two rules:
 
 ## Parts Catalog
 
-| Component              | Source                                             | Strategy     | Notes                                                                                        |
-| :--------------------- | :------------------------------------------------- | :----------- | :------------------------------------------------------------------------------------------- |
-| **Level Shifter Case** | [Matthew](https://makerworld.com/en/models/46852)  | **Vendored** | [level-shifter-case.scad](./level-shifter-case.scad) is pre-configured for the BSS138 board. |
-| **Pi Zero Case**       | [Romakev](https://makerworld.com/en/models/548199) | **Linked**   | Slim snap-fit case for Pi Zero / Zero W.                                                     |
-| **ESP32 Case**         | [fuchsr](https://makerworld.com/en/models/1891997) | **Linked**   | Standard enclosure for ESP32 WROOM DevKit v1.                                                |
+| Component                                                        | Source                                          | Strategy     | Notes                                                                                        |
+| :--------------------------------------------------------------- | :---------------------------------------------- | :----------- | :------------------------------------------------------------------------------------------- |
+| [**Level Shifter Case**](https://makerworld.com/en/models/46852) | [Matthew](https://makerworld.com/en/@Matthew)   | **Vendored** | [level-shifter-case.scad](./level-shifter-case.scad) is pre-configured for the BSS138 board. |
+| [**Pi Zero Case**](https://makerworld.com/en/models/548199)      | [Romakev](https://makerworld.com/en/@Romakev)   | **Linked**   | Slim snap-fit case for Pi Zero / Zero W.                                                     |
+| [**ESP32 Case**](https://makerworld.com/en/models/1891997)       | [MeMaddog](https://makerworld.com/en/@memaddog) | **Linked**   | Standard enclosure for ESP32 WROOM DevKit v1.                                                |
 
 ## Tools
 
