@@ -29,5 +29,11 @@ jobs:
       - name: Create dummy vault password file
         run: echo 'ci' > .vault_pass
 
+      - name: Create dummy vault
+        run: |
+          printf -- '---\nvault_fail2ban_slack_webhook_url: ""\nvault_detector_report_webhook_url: ""\n' \
+            > group_vars/all/vault.yml
+          ansible-vault encrypt group_vars/all/vault.yml
+
       - name: Run pre-commit
         run: pre-commit run --all-files
