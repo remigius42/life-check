@@ -19,11 +19,15 @@ See the **[Full BOM](../hardware/BOM.md)** for assembly materials and tools.
 
 ![Raspberry Pi wiring diagram](wiring_rpi.svg)
 
-Wire the receiver blue wire through the logic shifter to **GPIO 17 (BCM), physical pin 11**
-(see [pinout.xyz](https://pinout.xyz/pinout/pin11_gpio17/) for the full 40-pin header reference).
-The receiver is NPN open-collector — a pull-up to 3.3V is required on the LV side of the shifter.
-Most BSS138-based shifter boards include pull-ups on both sides; the daemon also enables the Pi's
-internal pull-up (~50 kΩ) as a fallback. Use pin 9 (GND) and pin 2 or 4 (5 V) for sensor power.
+Wire the receiver blue wire through the logic shifter to **GPIO 17 (BCM),
+physical pin 11** (see [pinout.xyz](https://pinout.xyz/pinout/pin11_gpio17/) for
+the full 40-pin header reference, or print the
+[RaspberryPi-GPIO-Label](https://github.com/Riebart/RaspberryPi-GPIO-Label) to
+slip a physical label onto the pins). The receiver is NPN open-collector — a
+pull-up to 3.3V is required on the LV side of the shifter. Most BSS138-based
+shifter boards include pull-ups on both sides; the daemon also enables the Pi's
+internal pull-up (~50 kΩ) as a fallback. Use pin 9 (GND) and pin 2 or 4 (5 V)
+for sensor power.
 
 ## 3D Printed Housing
 
