@@ -1,7 +1,30 @@
 # spellchecker:ignore esphome gfonts npos oled pullup roboto sntp tmpl ttgo useragent
+substitutions:
+  # Web server version: 2 (stable, recommended for WROOM) or 3 (groups, graph, OTA UI).
+  # v3 on S3: stack overflow crash fixed in 2026.3.2 (https://github.com/esphome/esphome/issues/14991).
+  # When switching to v3, also uncomment: sorting_groups in web_server, and web_server: blocks on each entity.
+  web_server_version: "2"
+  beam_gpio_pin: GPIO13
+  beam_debounce: 100ms
+  timezone: "Europe/Zurich"
+  notification_hour: "17"
+  notification_minute: "0"
+  test_mode_timeout: 30min
+  http_timeout: 10s
+  break_threshold: "2"
+  webhook_retries: "3"
+  msg_ok: "Beam breaks today: ✅ OK (equal or above threshold)"
+  msg_low: "Beam breaks today: 🚨 under threshold"
+  msg_zero: "Beam breaks today: 0 ⚠️ no breaks today, sensor might be down."
+
 esphome:
   name: life-check
+  friendly_name: "Life Check"
+  comment: "An unobtrusive life-check system - a positive take on the dead man's switch concept."
   min_version: "2024.6.0"
+  project:
+    name: "remigius42.life-check"
+    version: "2.0.0"
 
 esp32:
   board: esp32dev
@@ -20,21 +43,44 @@ logger:
 ota:
   - platform: esphome
     password: !secret ota_password
+  - platform: web_server
 
 web_server:
+  version: $web_server_version
+  local: true  # serve UI assets from device flash, not CDN — works on isolated home networks
   port: 80
   auth:
     username: !secret web_username
     password: !secret web_password
+  # sorting_groups requires version 3 — uncomment when upgrading:
+  # sorting_groups:
+  #   - id: group_status
+  #     name: "Status"
+  #     sorting_weight: 1
+  #   - id: group_controls
+  #     name: "Controls"
+  #     sorting_weight: 2
+  #   - id: group_report
+  #     name: "Report"
+  #     sorting_weight: 3
+  #   - id: group_messages
+  #     name: "Messages"
+  #     sorting_weight: 4
+  #   - id: group_webhook
+  #     name: "Webhook"
+  #     sorting_weight: 5
+  #   - id: group_system
+  #     name: "System"
+  #     sorting_weight: 6
 
 http_request:
   useragent: esphome/life-check
-  timeout: 10s
+  timeout: $http_timeout
 
 time:
   - platform: sntp
     id: sntp_time
-    timezone: !secret timezone
+    timezone: $timezone
     on_time:
       # Midnight rollover: shift history FIFO, reset today's count
       # Index 0 = yesterday, index 13 = 14 days ago; oldest entry is dropped
@@ -48,12 +94,18 @@ time:
               }
               id(daily_counts)[0] = id(today_count);
               id(today_count) = 0;
-      # Daily 17:00 report
+      # Per-minute poll: fires send_daily_report when local time matches report_hour:report_minute
       - seconds: 0
-        minutes: 0
-        hours: 17
+        minutes: /1
         then:
-          - script.execute: send_daily_report
+          - if:
+              condition:
+                lambda: |-
+                  auto t = id(sntp_time).now();
+                  return t.hour == (int)id(report_hour).state
+                      && t.minute == (int)id(report_minute).state;
+              then:
+                - script.execute: send_daily_report
 
 globals:
   - id: today_count
@@ -80,17 +132,20 @@ globals:
 binary_sensor:
   - platform: gpio
     pin:
-      number: !secret beam_gpio_pin
+      number: $beam_gpio_pin
       mode:
         input: true
         pullup: false  # divider provides pull-up; internal pull-up would raise LOW to ~0.94V (ambiguous)
       inverted: true   # NPN active-low: GPIO LOW = beam broken = sensor ON
     name: "Beam"
     id: beam_sensor
+    # web_server:
+    #   sorting_group_id: group_status
+    #   sorting_weight: 1
     # 100 ms chosen: suppresses sensor noise/vibration, well within 50-200 ms spec
     filters:
-      - delayed_on: 100ms
-      - delayed_off: 100ms
+      - delayed_on: $beam_debounce
+      - delayed_off: $beam_debounce
     on_press:
       - if:
           condition:
@@ -102,6 +157,9 @@ sensor:
   - platform: template
     name: "Today's Break Count"
     id: today_count_sensor
+    # web_server:
+    #   sorting_group_id: group_status
+    #   sorting_weight: 2
     lambda: 'return id(today_count);'
     update_interval: 60s
     unit_of_measurement: "crossings"
@@ -111,6 +169,9 @@ text_sensor:
   - platform: template
     name: "Daily History"
     id: daily_history_sensor
+    # web_server:
+    #   sorting_group_id: group_status
+    #   sorting_weight: 3
     update_interval: 60s
     lambda: |-
       std::string out;
@@ -119,74 +180,145 @@ text_sensor:
         out += std::to_string(id(daily_counts)[i]);
       }
       return out;
+  - platform: template
+    name: "Firmware Version"
+    # web_server:
+    #   sorting_group_id: group_system
+    #   sorting_weight: 2
+    lambda: 'return {ESPHOME_PROJECT_VERSION};'
+    update_interval: 1h
+    icon: mdi:tag
 
 text:
   - platform: template
+    id: msg_zero
+    name: "Message: Zero"
+    # web_server:
+    #   sorting_group_id: group_messages
+    #   sorting_weight: 1
+    mode: text
+    max_length: 254
+    restore_value: true
+    optimistic: true
+    initial_value: $msg_zero
+  - platform: template
+    id: msg_low
+    name: "Message: Low"
+    # web_server:
+    #   sorting_group_id: group_messages
+    #   sorting_weight: 2
+    mode: text
+    max_length: 254
+    restore_value: true
+    optimistic: true
+    initial_value: $msg_low
+  - platform: template
+    id: msg_ok
+    name: "Message: OK"
+    # web_server:
+    #   sorting_group_id: group_messages
+    #   sorting_weight: 3
+    mode: text
+    max_length: 254
+    restore_value: true
+    optimistic: true
+    initial_value: $msg_ok
+  - platform: template
     id: webhook_url
     name: "Webhook URL"
+    # web_server:
+    #   sorting_group_id: group_webhook
+    #   sorting_weight: 1
     mode: text
     max_length: 254
     restore_value: true
     optimistic: true
     initial_value: !secret webhook_url
-  - platform: template
-    id: msg_ok
-    name: "Message: OK"
-    mode: text
-    max_length: 254
-    restore_value: true
-    optimistic: true
-    initial_value: !secret msg_ok
-  - platform: template
-    id: msg_low
-    name: "Message: Low"
-    mode: text
-    max_length: 254
-    restore_value: true
-    optimistic: true
-    initial_value: !secret msg_low
-  - platform: template
-    id: msg_zero
-    name: "Message: Zero"
-    mode: text
-    max_length: 254
-    restore_value: true
-    optimistic: true
-    initial_value: !secret msg_zero
 
 number:
   - platform: template
     id: break_threshold
     name: "Break Threshold"
+    # web_server:
+    #   sorting_group_id: group_report
+    #   sorting_weight: 1
     min_value: 0
     max_value: 100
     step: 1
     restore_value: true
     optimistic: true
-    initial_value: 2
+    initial_value: $break_threshold
   - platform: template
     id: webhook_retries
     name: "Webhook Retries"
+    # web_server:
+    #   sorting_group_id: group_webhook
+    #   sorting_weight: 2
     min_value: 0
     max_value: 10
     step: 1
     restore_value: true
     optimistic: true
-    initial_value: 3
+    initial_value: $webhook_retries
+  - platform: template
+    id: report_hour
+    name: "Report Hour"
+    # web_server:
+    #   sorting_group_id: group_report
+    #   sorting_weight: 2
+    min_value: 0
+    max_value: 23
+    step: 1
+    restore_value: true
+    optimistic: true
+    initial_value: $notification_hour
+  - platform: template
+    id: report_minute
+    name: "Report Minute"
+    # web_server:
+    #   sorting_group_id: group_report
+    #   sorting_weight: 3
+    min_value: 0
+    max_value: 59
+    step: 1
+    restore_value: true
+    optimistic: true
+    initial_value: $notification_minute
 
 button:
   - platform: template
     name: "Reset Today's Count"
     id: reset_count_button
+    # web_server:
+    #   sorting_group_id: group_controls
+    #   sorting_weight: 1
     icon: "mdi:refresh"
     on_press:
       - lambda: 'id(today_count) = 0;'
       - logger.log: "Today's count reset via web UI"
+  - platform: template
+    name: "Reset to Defaults (not webhook URL)"
+    id: reset_defaults_button
+    # web_server:
+    #   sorting_group_id: group_system
+    #   sorting_weight: 1
+    icon: "mdi:restore"
+    on_press:
+      - number.set: {id: break_threshold, value: $break_threshold}
+      - number.set: {id: webhook_retries, value: $webhook_retries}
+      - number.set: {id: report_hour, value: $notification_hour}
+      - number.set: {id: report_minute, value: $notification_minute}
+      - text.set: {id: msg_ok, value: $msg_ok}
+      - text.set: {id: msg_low, value: $msg_low}
+      - text.set: {id: msg_zero, value: $msg_zero}
 
 switch:
   - platform: template
     name: "Test Mode"
     id: test_mode_switch
+    # web_server:
+    #   sorting_group_id: group_controls
+    #   sorting_weight: 2
     restore_mode: ALWAYS_OFF
     turn_on_action:
       - lambda: 'id(test_mode_active) = true;'
@@ -199,7 +331,7 @@ script:
   - id: test_mode_revert_timer
     mode: restart  # re-enabling test mode resets the 30-minute clock
     then:
-      - delay: 30min
+      - delay: $test_mode_timeout
       - switch.turn_off: test_mode_switch
 
   - id: send_daily_report
@@ -286,7 +418,8 @@ script:
 # See docs/esp32.md#ttgo-all-in-one-board for wiring and setup notes.
 # i2c:
 #   scl: GPIO4
-#   sda: GPIO5
+#   sda: GPIO5  # GPIO5 is a strapping pin (VDDSDIO); ESPHome warns about this.
+#               # Safe on TTGO: GPIO5 must be HIGH at boot, I2C pull-ups keep it HIGH.
 
 # font:
 #   - file: "gfonts://Roboto"

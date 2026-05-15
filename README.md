@@ -41,6 +41,10 @@ Both routes use the same DFRobot sensor and deliver the same core features.
 | **Raspberry Pi**    | Familiar Linux environment; easy to add future automations; history persists across reboots | Heavier setup (Ansible, Python stack, systemd); higher power draw; more expensive             |
 | **ESP32 + ESPHome** | Simpler setup (flash one firmware); lower power; cheaper hardware; built-in web UI and OTA  | 14-day history resets on reboot (today's count is preserved); customization requires YAML/C++ |
 
+> **Note:** ESP8266 is not officially supported — web server v3 (sorting groups,
+> browser OTA) will likely not work due to RAM constraints, and even v2 may struggle.
+> The official target is ESP32, preferably S3 or above. See the [BOM](hardware/BOM.md).
+
 Pick your route for the full guide:
 
 - [Raspberry Pi route](docs/raspberry-pi.md) — parts, wiring, Ansible setup

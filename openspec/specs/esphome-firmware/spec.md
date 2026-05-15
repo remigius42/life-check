@@ -61,9 +61,9 @@ The firmware SHALL maintain a daily break count (`today_count`, `restore_value: 
 
 ---
 
-### Requirement: Daily Slack webhook report with 3-tier messaging
+### Requirement: Daily Slack webhook report at configurable time
 
-The firmware SHALL send an HTTP POST (timeout: 10 seconds, `Content-Type: application/json`) to the configured webhook URL once per day at 17:00 local time (as determined by the SNTP time component using the configured timezone). The POST body SHALL be `{"text": "<message>"}`. The message is selected by 3-tier logic based on today's break count and a configured threshold. The count and message SHALL be captured at the time of the 17:00 trigger and reused unchanged across all retry attempts, even if retries span past midnight.
+The firmware SHALL send an HTTP POST (timeout configurable via `substitutions:`, default 10 seconds, `Content-Type: application/json`) to the configured webhook URL once per day when local time matches the `report_hour` and `report_minute` entity values (as determined by the SNTP time component using the configured timezone). The POST body SHALL be `{"text": "<message>"}`. The message is selected by 3-tier logic based on today's break count and a configured threshold. The count and message SHALL be captured at the time of the trigger and reused unchanged across all retry attempts, even if retries span past midnight.
 
 #### Scenario: Count meets or exceeds threshold
 - **WHEN** today's break count ≥ threshold at report time
@@ -87,7 +87,7 @@ The firmware SHALL send an HTTP POST (timeout: 10 seconds, `Content-Type: applic
 
 #### Scenario: POST fails — retry up to configured limit
 - **WHEN** the HTTP POST returns a non-2xx status code or times out
-- **THEN** the firmware retries up to `webhook_retries` additional times (default 3), with a 30-second delay between attempts; total attempts = 1 initial + `webhook_retries`; each attempt uses the same 10-second timeout
+- **THEN** the firmware retries up to `webhook_retries` additional times (default 3), with a 30-second delay between attempts; total attempts = 1 initial + `webhook_retries`; each attempt uses the configured timeout
 
 #### Scenario: All retries exhausted
 - **WHEN** every attempt (initial + retries) has failed
@@ -95,8 +95,8 @@ The firmware SHALL send an HTTP POST (timeout: 10 seconds, `Content-Type: applic
 
 ---
 
-### Requirement: Runtime-configurable webhook URL, threshold, message templates, and retry count
-The firmware SHALL expose the webhook URL and three message templates as `text` entities with `max_length: 254` and `restore_value: true`. The break threshold SHALL be a `number` entity with `min_value: 0`, `max_value: 100`, `step: 1`, and `restore_value: true`. The webhook retry count (`webhook_retries`) SHALL be a `number` entity with `min_value: 0`, `max_value: 10`, `step: 1`, `restore_value: true`, and default 3. All six entities are NVS-persisted and editable via the web UI without reflashing. Initial values SHALL be supplied via `secrets.yaml` at first flash.
+### Requirement: Runtime-configurable webhook URL, threshold, message templates, retry count, and report time
+The firmware SHALL expose the webhook URL and three message templates as `text` entities with `max_length: 254` and `restore_value: true`. The break threshold SHALL be a `number` entity with `min_value: 0`, `max_value: 100`, `step: 1`, and `restore_value: true`. The webhook retry count (`webhook_retries`) SHALL be a `number` entity with `min_value: 0`, `max_value: 10`, `step: 1`, `restore_value: true`, and default 3. The report hour (`report_hour`) SHALL be a `number` entity with `min_value: 0`, `max_value: 23`, `step: 1`, and `restore_value: true`. The report minute (`report_minute`) SHALL be a `number` entity with `min_value: 0`, `max_value: 59`, `step: 1`, and `restore_value: true`. All eight entities are NVS-persisted and editable via the web UI without reflashing. Initial values (except webhook URL) are defined in the `substitutions:` block of `life-check.yaml`; webhook URL is supplied via `secrets.yaml` at first flash.
 
 #### Scenario: User updates webhook URL via web UI
 - **WHEN** a user edits the webhook URL field in the web UI and saves
@@ -106,9 +106,13 @@ The firmware SHALL expose the webhook URL and three message templates as `text` 
 - **WHEN** a user edits a message template in the web UI and saves
 - **THEN** the new template is used for all subsequent reports and survives reboot
 
-#### Scenario: Initial values from secrets.yaml
+#### Scenario: User updates report time via web UI
+- **WHEN** a user changes the Report Hour or Report Minute number entity in the web UI
+- **THEN** subsequent daily reports fire at the new time and the setting survives reboot
+
+#### Scenario: Initial values from substitutions block
 - **WHEN** the device is flashed for the first time
-- **THEN** webhook URL and templates are pre-populated from `secrets.yaml` substitutions
+- **THEN** message templates and numeric defaults are pre-populated from the `substitutions:` block in `life-check.yaml`; the webhook URL is pre-populated from `secrets.yaml` (`!secret webhook_url`)
 
 ---
 
@@ -172,7 +176,7 @@ an OLED.
 ### Requirement: Default sensor GPIO
 The default `beam_gpio_pin` SHALL be GPIO 13. This pin is free on both the
 ESP32-WROOM DevKit v1 and the TTGO all-in-one board (which hard-wires GPIO 4 and
-5 to the onboard OLED). The default SHALL be supplied via `secrets.yaml.example`.
+5 to the onboard OLED). The default is defined in the `substitutions:` block of `life-check.yaml`.
 
 #### Scenario: Default GPIO avoids OLED conflict on TTGO
 - **WHEN** the firmware is flashed to a TTGO board using the default `beam_gpio_pin`
@@ -203,7 +207,7 @@ The firmware SHALL include the ESPHome `ota` component so firmware updates can b
 ---
 
 ### Requirement: SNTP time component
-The firmware SHALL configure an ESPHome `time` component (platform: `sntp`) with a timezone supplied via `secrets.yaml` substitution. This component is required by the midnight rollover automation and the daily 17:00 webhook trigger. The timezone MUST be set at first flash and survives reboots via the compiled firmware configuration.
+The firmware SHALL configure an ESPHome `time` component (platform: `sntp`) with a timezone set at compile time in the `substitutions:` block of `life-check.yaml`. This component is required by the midnight rollover automation and the daily webhook trigger. The timezone MUST be set at first flash and survives reboots via the compiled firmware configuration.
 
 #### Scenario: Time synchronized after boot
 - **WHEN** the device connects to WiFi after boot
@@ -213,9 +217,9 @@ The firmware SHALL configure an ESPHome `time` component (platform: `sntp`) with
 - **WHEN** the SNTP time component is configured with the user's timezone
 - **THEN** the midnight rollover fires at 00:00:00 local time, not UTC
 
-#### Scenario: Correct local 17:00 webhook
+#### Scenario: Correct local report time
 - **WHEN** the SNTP time component is configured with the user's timezone
-- **THEN** the daily webhook fires at 17:00 local time, not UTC
+- **THEN** the daily webhook fires at the configured local time (default 17:00), not UTC
 
 ---
 
@@ -225,6 +229,44 @@ The firmware SHALL provide a manual mechanism to reset today's break count to ze
 #### Scenario: Count reset triggered
 - **WHEN** the "Reset Today's Count" button is pressed in the web UI
 - **THEN** today's break count is set to 0
+
+---
+
+### Requirement: ESPHome project identity and firmware version
+The `esphome:` block SHALL include: `friendly_name: "Life Check"` (used in web UI and mDNS); `comment:` set to the project tagline from README.md; and a `project:` sub-block with `name: "remigius42.life-check"` and a `version:` field set to the current semver release (e.g. `"1.0.0"`). The firmware SHALL expose the project version as a read-only `text_sensor` (platform: template, `lambda: 'return {ESPHOME_PROJECT_VERSION};'`, `update_interval: 1h`) visible in the web UI.
+
+The `project.version` field SHALL be updated to match the git release tag immediately before tagging (i.e. tag `v1.2.3` → `version: "1.2.3"`). The CHANGELOG.md entry and the `project.version` field SHALL always refer to the same version number at release time.
+
+The `web_server` component SHALL use `local: true` (assets served from device flash; UI works on isolated home networks) and expose firmware upload via `ota: platform: web_server`. The web server version SHALL be controlled by a `web_server_version` substitution (default `"2"` for WROOM stability; set to `"3"` on ESP32-S3 or when group/graph/browser-OTA UI features are needed). Version 3 on original ESP32-WROOM causes significant UI latency and HTTP server task contention with sensor logic.
+
+When `web_server_version` is `"3"`, the web UI SHALL define six `sorting_groups`: **Status** (Beam, Today's Break Count, Daily History), **Controls** (Test Mode, Reset Today's Count), **Report** (Break Threshold, Report Hour, Report Minute), **Messages** (Message: Zero, Message: Low, Message: OK), **Webhook** (Webhook URL, Webhook Retries), **System** (Reset to Defaults, Firmware Version). Every entity SHALL declare a `sorting_group_id` and sequential `sorting_weight` (1, 2, 3…) within its group. These blocks SHALL be commented out when running version 2 (they hard-error under v2).
+
+The firmware SHALL include a `Reset to Defaults (not webhook URL)` button that restores all NVS-persisted entities (thresholds, retries, report time, message templates) to their substitution-block defaults. The webhook URL SHALL be explicitly excluded from this reset.
+
+#### Scenario: Device web UI shows firmware version
+- **WHEN** a user opens the device web UI
+- **THEN** a read-only "Firmware Version" sensor displays the current semver version string
+
+#### Scenario: Release tag created
+- **WHEN** a new git release tag (e.g. `v1.2.3`) is created
+- **THEN** `esphome.project.version` in `life-check.yaml` is already set to `"1.2.3"` and the commit being tagged includes that update
+
+---
+
+### Requirement: Configuration separation — substitutions vs secrets
+All user-tunable, non-sensitive configuration values SHALL be defined in the `substitutions:` block at the top of `life-check.yaml`. Sensitive values (credentials, authentication tokens, URLs containing embedded secrets) SHALL be stored in `secrets.yaml` and referenced via `!secret`. No sensitive value SHALL appear in `substitutions:`, and no non-sensitive value SHALL appear in `secrets.yaml`. This rule applies to all current and future configuration added to the firmware.
+
+This rule governs the **compile-time config source** (where the value is declared in firmware configuration files), not runtime storage. A sensitive value whose initial value is supplied via `secrets.yaml`/`!secret` MAY also be exposed as an NVS-persisted, web-UI-editable entity; the `!secret` reference covers the initial value at flash time, and runtime NVS storage is a separate concern.
+
+A value is considered sensitive if its exposure would grant unauthorized access to a system or service (e.g., WiFi password, OTA password, web UI credentials, webhook URLs containing auth tokens). A value is non-sensitive if it is a behavioral parameter or hardware setting with no security implication (e.g., GPIO pin, timezone, timing values, message templates, numeric thresholds).
+
+#### Scenario: New sensitive config added
+- **WHEN** a new configuration value that grants access to a system or service is added to the firmware
+- **THEN** it SHALL be stored in `secrets.yaml` and referenced via `!secret`, not placed in `substitutions:`
+
+#### Scenario: New non-sensitive config added
+- **WHEN** a new behavioral or hardware configuration value with no security implication is added to the firmware
+- **THEN** it SHALL be defined in the `substitutions:` block of `life-check.yaml`, not in `secrets.yaml`
 
 ---
 

@@ -1,4 +1,4 @@
-<!-- spellchecker:ignore dialout memaddog newgrp oled purecrea ttgo uucp usermod wroom -->
+<!-- spellchecker:ignore dialout memaddog newgrp oled pioenvs purecrea ttgo uucp usermod wroom -->
 
 # ESP32 Route
 
@@ -22,20 +22,25 @@ level shifter (e.g., a BSS138-based module like the "Purecrea 2-channel converte
 ![ESP32 wiring diagram](wiring_esphome.svg)
 
 Wire sensor power from the board's **VBUS (5 V)** pin. Connect the receiver signal through the
-resistor divider (10 kΩ series + 20 kΩ to GND) to the GPIO set in `secrets.yaml` as
-`beam_gpio_pin`. The default is **GPIO 13**. Do **not** enable the internal pull-up on the GPIO
-(the divider acts as the pull-up; enabling the internal pull-up raises the LOW voltage to ~0.94 V,
-above the detection threshold).
+resistor divider (10 kΩ series + 20 kΩ to GND) to the GPIO set in the `substitutions:` block of
+`esphome/life-check.yaml` as `beam_gpio_pin`. The default is **GPIO 13**. Do **not** enable the
+internal pull-up on the GPIO (the divider acts as the pull-up; enabling the internal pull-up raises
+the LOW voltage to ~0.94 V, above the detection threshold).
 
 ### TTGO all-in-one board
 
 The TTGO (WROOM + 18650 + OLED) hard-wires GPIO 4 and 5 to the onboard OLED
 display (SCL=4, SDA=5). Use **GPIO 13** (or any other free pin) for the sensor
-and update `beam_gpio_pin` in `secrets.yaml` accordingly.
+and update `beam_gpio_pin` in the `substitutions:` block of `esphome/life-check.yaml` accordingly.
 
 To enable the OLED display (shows beam state and today's break count), uncomment
 the `i2c`, `font`, and `display` blocks at the bottom of
 `esphome/life-check.yaml`.
+
+> **Note:** ESPHome will warn that GPIO5 is a strapping pin (it controls VDDSDIO
+> voltage selection at boot). This is expected and safe on the TTGO board: GPIO5
+> must be HIGH at boot, and the I2C pull-up resistors keep it HIGH. No boot
+> failures result from this wiring.
 
 ![TTGO OLED setup with break-beam sensor](esp32-oled-setup.jpg)
 
@@ -77,11 +82,27 @@ source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
-### 2. Create your secrets file
+### 2. Create your secrets file and review compile-time config
+
+Configuration is split across two files:
+
+- **`esphome/secrets.yaml`** — credentials only: WiFi SSID/password, OTA password,
+  web UI credentials, and webhook URL. These must be set before flashing.
+- **`substitutions:` block in `esphome/life-check.yaml`** — non-secret compile-time
+  config: `beam_gpio_pin` (default GPIO 13) and `timezone` (default `Europe/Zurich`).
+  These two values are compile-time only and cannot be changed via the web UI after
+  flashing: `beam_gpio_pin` is physically wired at assembly, and `timezone` uses an
+  opaque POSIX string format (e.g., `CET-1CEST,M3.5.0,M10.5.0/3`) that is error-prone
+  to edit at runtime.
+
+Everything else — threshold, retry count, message templates, and report time — has
+sensible defaults and can be configured via the web UI after first flash without
+reflashing.
 
 ```bash
 cp esphome/secrets.yaml.example esphome/secrets.yaml
-# Edit esphome/secrets.yaml with your WiFi, webhook URL, and timezone
+# Edit esphome/secrets.yaml with your WiFi credentials and webhook URL
+# Open esphome/life-check.yaml and update beam_gpio_pin / timezone if needed
 ```
 
 `secrets.yaml` is gitignored — never commit it.
@@ -100,7 +121,9 @@ over-the-air.
 
 ### 4. OTA updates
 
-Once the device is on the network:
+Once the device is on the network you have two options:
+
+**CLI (recommended for development):**
 
 ```bash
 esphome run esphome/life-check.yaml
@@ -108,13 +131,31 @@ esphome run esphome/life-check.yaml
 
 ESPHome discovers the device via mDNS and uploads wirelessly — no USB required.
 
+**Browser upload:**
+
+```bash
+esphome compile esphome/life-check.yaml
+```
+
+Then open the device web UI → OTA section and upload the `.bin` from
+`.esphome/build/life-check/.pioenvs/life-check/firmware.bin`. Useful for
+handing off a firmware file without CLI access.
+
 ### 5. Configure webhook and thresholds
 
 Open the device's web UI at its IP address on port 80. All runtime settings
-(webhook URL, message templates, threshold, retry count) are editable there and
-survive reboots.
+(webhook URL, message templates, threshold, retry count, report time) are editable
+there and survive reboots.
+
+Message templates support a `{count}` placeholder that is replaced with today's
+numeric crossing count before sending. For example:
+`"Beam breaks today: {count} — looking good!"` → `"Beam breaks today: 5 — looking good!"`
+
+The default templates omit the count intentionally — including exact numbers in a
+shared channel could reveal more about someone's daily routine than intended.
 
 The web UI also includes:
 
 - **Test Mode**: A switch to temporarily pause counting.
 - **Reset Today's Count**: A button to immediately clear the current daily crossing count.
+- **Report Hour / Report Minute**: Set the local time for the daily webhook report (default 17:00).

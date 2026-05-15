@@ -36,6 +36,10 @@ webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
 The payload the system sends is a plain JSON object with a `text` field, which
 Slack renders as a message in the chosen channel.
 
+Message templates support a `{count}` placeholder for today's crossing count. The
+default templates omit it intentionally — including exact numbers in a shared channel
+could reveal more about someone's daily routine than intended.
+
 ______________________________________________________________________
 
 ## Alternatives

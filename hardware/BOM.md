@@ -19,6 +19,9 @@ Life Check system.
 | **5V USB Power Supply**                                               | 1        | Both  | 5V / 1A minimum.                                  |
 | **USB Cable**                                                         | 1        | Both  | Micro-USB or USB-C (depending on board).          |
 
+> **Note:** ESP8266 is not officially supported — web server v3 will not work due to RAM
+> constraints, and even v2 may struggle. The official target is ESP32, preferably S3 or above.
+
 ## Assembly Materials
 
 | Item                     | Quantity | Route | Notes                                               |

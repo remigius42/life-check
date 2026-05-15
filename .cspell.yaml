@@ -63,6 +63,7 @@ ignoreWords:
   - nologin
   - realpath
   - startswith
+  - vddsdio
 ignorePaths:
   - .git
   - .gemini/commands/opsx
