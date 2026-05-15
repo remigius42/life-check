@@ -20,6 +20,11 @@ monitored.
 silently and family members receive a low-count alert via webhook — no app
 or login required.*
 
+![Life Check web UI — ESP32 route](docs/esphome-web-ui.png)
+
+*The ESP32 route uses ESPHome's built-in web UI; the daily history resets on
+reboot (today's count is preserved).*
+
 ## What it does
 
 - Counts daily break-beam crossings via a doorway sensor

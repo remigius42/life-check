@@ -12,8 +12,9 @@
 # Ansible vault password file
 .vault_pass
 
-# ESPHome secrets (contains WiFi credentials, OTA password, webhook URL)
+# ESPHome secrets and build cache
 esphome/secrets.yaml
+esphome/.esphome/
 
 # Ansible inventory (contains host addresses — copy from inventory/hosts.example)
 inventory/hosts

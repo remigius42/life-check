@@ -1,4 +1,4 @@
-# spellchecker:ignore esphome npos pullup sntp tmpl useragent
+# spellchecker:ignore esphome gfonts npos oled pullup roboto sntp tmpl ttgo useragent
 esphome:
   name: life-check
   min_version: "2024.6.0"
@@ -106,6 +106,19 @@ sensor:
     update_interval: 60s
     unit_of_measurement: "crossings"
     accuracy_decimals: 0
+
+text_sensor:
+  - platform: template
+    name: "Daily History"
+    id: daily_history_sensor
+    update_interval: 60s
+    lambda: |-
+      std::string out;
+      for (int i = 0; i < 14; i++) {
+        if (i > 0) out += ",";
+        out += std::to_string(id(daily_counts)[i]);
+      }
+      return out;
 
 text:
   - platform: template
@@ -267,3 +280,23 @@ script:
                     - logger.log:
                         level: ERROR
                         format: "Webhook failed after all attempts (network error)"
+
+# TTGO all-in-one board only: uncomment the blocks below.
+# On boards without an OLED, these cause continuous I2C errors in the log.
+# See docs/esp32.md#ttgo-all-in-one-board for wiring and setup notes.
+# i2c:
+#   scl: GPIO4
+#   sda: GPIO5
+
+# font:
+#   - file: "gfonts://Roboto"
+#     id: font_small
+#     size: 14
+
+# display:
+#   - platform: ssd1306_i2c
+#     model: "SSD1306 128x64"
+#     address: 0x3C
+#     lambda: |-
+#       it.printf(0,  0, id(font_small), id(beam_sensor).state ? "BEAM: broken" : "BEAM: clear");
+#       it.printf(0, 20, id(font_small), "Today: %d", id(today_count));

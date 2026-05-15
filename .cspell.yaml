@@ -17,6 +17,7 @@ words:
   - gpio
   - isort
   - maxretry
+  - oled
   - oneshot
   - opencode
   - openspec
@@ -43,6 +44,7 @@ words:
   - timedatectl
   - tmpfs
   - toctou
+  - ttgo
   - tunables
   - unban
   - urlopen

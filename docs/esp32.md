@@ -1,4 +1,4 @@
-<!-- spellchecker:ignore memaddog purecrea wroom -->
+<!-- spellchecker:ignore dialout memaddog newgrp oled purecrea ttgo uucp usermod wroom -->
 
 # ESP32 Route
 
@@ -22,10 +22,20 @@ level shifter (e.g., a BSS138-based module like the "Purecrea 2-channel converte
 ![ESP32 wiring diagram](wiring_esphome.svg)
 
 Wire sensor power from the board's **VBUS (5 V)** pin. Connect the receiver signal through the
-resistor divider (10 kΩ series + 20 kΩ to GND) to **GPIO 4** — WROOM DevKit v1 physical pin 26,
-S3-DevKitC-1 J1 pin 4. Do **not** enable the internal pull-up on the GPIO
+resistor divider (10 kΩ series + 20 kΩ to GND) to the GPIO set in `secrets.yaml` as
+`beam_gpio_pin`. The default is **GPIO 13**. Do **not** enable the internal pull-up on the GPIO
 (the divider acts as the pull-up; enabling the internal pull-up raises the LOW voltage to ~0.94 V,
 above the detection threshold).
+
+### TTGO all-in-one board
+
+The TTGO (WROOM + 18650 + OLED) hard-wires GPIO 4 and 5 to the onboard OLED
+display (SCL=4, SDA=5). Use **GPIO 13** (or any other free pin) for the sensor
+and update `beam_gpio_pin` in `secrets.yaml` accordingly.
+
+To enable the OLED display (shows beam state and today's break count), uncomment
+the `i2c`, `font`, and `display` blocks at the bottom of
+`esphome/life-check.yaml`.
 
 ## 3D Printed Housing
 
@@ -41,8 +51,17 @@ for our full hardware philosophy.
 ## Prerequisites
 
 - Python 3.13+ with a virtual environment
+
 - A webhook URL for daily reports — see [notifications.md](notifications.md) for
   Slack setup and alternatives
+
+- Serial port access — your user must be in the group that owns `/dev/ttyUSB0` (or
+  `/dev/ttyACM0`). Check with `stat -c "%G" /dev/ttyUSB0`:
+
+  - **Debian/Ubuntu**: group is `dialout` → `sudo usermod -a -G dialout $USER`
+  - **Arch/EndeavourOS**: group is `uucp` → `sudo usermod -a -G uucp $USER`
+
+  Then activate immediately with `newgrp uucp` (or `newgrp dialout`), or log out and back in.
 
 ## Setup
 
