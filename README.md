@@ -53,6 +53,10 @@ MIT — see individual role READMEs for per-role attribution.
 [Pico CSS](https://picocss.com) (Copyright 2019-2025) is vendored under the MIT license.
 The license notice is preserved in `roles/detector/files/static/pico-*.min.css`.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of notable changes.
+
 ## Development
 
 See [docs/development.md](docs/development.md) for local setup, running tests, linting,

@@ -12,9 +12,11 @@ words:
   - breakbeam
   - commitlint
   - dataclass
+  - deployers
   - esphome
   - findtime
   - gpio
+  - hotfixes
   - isort
   - maxretry
   - oled
@@ -55,6 +57,7 @@ ignoreWords:
   - endfor
   - endraw
   - isdir
+  - keepachangelog
   - lineinfile
   - nocows
   - nologin
