@@ -68,6 +68,10 @@ and the change workflow.
 
 See [docs/notifications.md](docs/notifications.md) for webhook setup (Slack, email, Telegram).
 
+## Security
+
+Please report vulnerabilities privately — see [SECURITY.md](.github/SECURITY.md).
+
 ## Contributing
 
 PRs are welcome. Fair warning: this is a personal project maintained on a
