@@ -33,14 +33,35 @@ The TTGO (WROOM + 18650 + OLED) hard-wires GPIO 4 and 5 to the onboard OLED
 display (SCL=4, SDA=5). Use **GPIO 13** (or any other free pin) for the sensor
 and update `beam_gpio_pin` in the `substitutions:` block of `esphome/life-check.yaml` accordingly.
 
-To enable the OLED display (shows beam state and today's break count), uncomment
-the `i2c`, `font`, and `display` blocks at the bottom of
-`esphome/life-check.yaml`.
+To enable the OLED display (shows beam state, today's break count, and battery level), uncomment
+the `i2c`, `font`, and `display` blocks at the bottom of `esphome/life-check.yaml`, along with
+the two battery sensor blocks (`battery_voltage`, `battery_level`) in the `sensor:` and
+`text_sensor:` sections. These four blocks are meant to be enabled or disabled together —
+leaving the battery sensors active without the wiring results in permanent `??` readings in the
+web UI; leaving them commented out while the display is active causes a compile error.
 
 > **Note:** ESPHome will warn that GPIO5 is a strapping pin (it controls VDDSDIO
 > voltage selection at boot). This is expected and safe on the TTGO board: GPIO5
 > must be HIGH at boot, and the I2C pull-up resistors keep it HIGH. No boot
 > failures result from this wiring.
+
+#### Battery monitoring
+
+The TTGO board has no built-in battery monitoring circuit. To enable the
+"Battery Voltage" and "Battery Level" sensors, wire a voltage divider from the
+battery+ through-hole pad on the board underside:
+
+1. Solder a wire to the **battery+ pad** (large pad on the underside where the 18650 holder is soldered)
+1. Connect: battery+ → 100 kΩ → **GPIO34** header pin
+1. Connect: junction between the two resistors → 100 kΩ → **GND** header pin
+
+The firmware reads the midpoint voltage and multiplies by 2.0 to recover the
+actual battery voltage. GPIO34 is input-only and ADC1 (safe with WiFi active).
+
+> **Warning:** Do not reduce `beam_debounce` below 250 ms when running on battery. WiFi TX bursts
+> draw 200–300 mA and cause brief supply voltage sag that can pull the sensor signal line below
+> the ESP32 HIGH threshold, producing false beam-break counts. The 250 ms debounce rejects these
+> transients.
 
 ![TTGO OLED setup with break-beam sensor](esp32-oled-setup.jpg)
 

@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-05-15
+
+### Added
+
+#### ESP32 / ESPHome route
+
+- Battery voltage ADC sensor on GPIO34 (11 dB attenuation, 1:2 resistor divider via 100 kΩ + 100 kΩ)
+  exposed as "Battery Voltage" (V) in the web UI; requires one solder joint to battery+ pad on board underside
+- Battery level text sensor ("Battery Level") mapping voltage to `Good` (≥ 4.0 V) / `OK` (≥ 3.6 V) /
+  `Low` (< 3.6 V) / `??` (< 2.5 V or floating pin guard)
+- OLED third line showing `Batt: X.XXV <level>` when OLED blocks are enabled (TTGO only)
+- Both battery sensors include commented-out `web_server` sorting blocks (`group_system`, weights 3 and 4)
+  for use when upgrading to web server v3
+
+### Changed
+
+#### ESP32 / ESPHome route
+
+- `beam_debounce` raised from 100 ms to 250 ms — on battery, WiFi TX bursts cause supply sag that
+  produces false LOW readings lasting > 100 ms; 250 ms rejects these transients
+- OLED display description updated: now shows beam state, today's count, and battery level
+
 ## [2.0.0] - 2026-05-15
 
 ### Added
@@ -77,6 +99,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions workflow running pre-commit checks
 - Python 3.13 dev toolchain
 
+______________________________________________________________________
+
 [1.0.0]: https://github.com/remigius42/life-check/releases/tag/v1.0.0
 [2.0.0]: https://github.com/remigius42/life-check/compare/v1.0.0...v2.0.0
-[unreleased]: https://github.com/remigius42/life-check/compare/v2.0.0...HEAD
+[2.1.0]: https://github.com/remigius42/life-check/compare/v2.0.0...v2.1.0
+[unreleased]: https://github.com/remigius42/life-check/compare/v2.1.0...HEAD
