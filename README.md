@@ -52,7 +52,7 @@ Pick your route for the full guide:
 
 ## License
 
-MIT — see individual role READMEs for per-role attribution.
+MIT — see [LICENSE](LICENSE) and individual role READMEs for per-role attribution.
 
 [Pico CSS](https://picocss.com) (Copyright 2019-2025) is vendored under the MIT license.
 The license notice is preserved in `roles/detector/files/static/pico-*.min.css`.
