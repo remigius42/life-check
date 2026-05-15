@@ -37,6 +37,8 @@ To enable the OLED display (shows beam state and today's break count), uncomment
 the `i2c`, `font`, and `display` blocks at the bottom of
 `esphome/life-check.yaml`.
 
+![TTGO OLED setup with break-beam sensor](esp32-oled-setup.jpg)
+
 ## 3D Printed Housing
 
 To protect the ESP32 from dust and accidental shorts, a 3D-printed enclosure is recommended. We
