@@ -18,3 +18,9 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+rules:
+  tasks:
+    - Make sure to include tasks to update the docs if affected
+    - Make sure to include tasks to update the CHANGELOG.md
+    - Make sure to include a task to update the `esphome.project.version` in
+      `esphome/life-check.yaml` to the target CHANGELOG.md version
