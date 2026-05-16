@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-05-16
+
 ### Changed
 
 #### ESP32 / ESPHome route
 
+- Binary sensor renamed from `Beam` to `Beam interruption sensor` — `Beam: OFF`
+  was misleading to non-technical users who may interpret "OFF" as an outage
+  rather than a clear beam
 - Battery monitoring documented as illustrative only — not intended for
   production use, as the boost converter cannot guarantee a stable 5 V supply
   under WiFi TX load at all battery charge levels
@@ -124,4 +129,5 @@ ______________________________________________________________________
 [2.0.0]: https://github.com/remigius42/life-check/compare/v1.0.0...v2.0.0
 [2.1.0]: https://github.com/remigius42/life-check/compare/v2.0.0...v2.1.0
 [2.2.0]: https://github.com/remigius42/life-check/compare/v2.1.0...v2.2.0
-[unreleased]: https://github.com/remigius42/life-check/compare/v2.2.0...HEAD
+[2.2.1]: https://github.com/remigius42/life-check/compare/v2.2.0...v2.2.1
+[unreleased]: https://github.com/remigius42/life-check/compare/v2.2.1...HEAD

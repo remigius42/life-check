@@ -30,7 +30,7 @@ esphome:
   min_version: "2024.6.0"
   project:
     name: "remigius42.life-check"
-    version: "2.2.0"
+    version: "2.2.1"
 
 esp32:
   board: esp32dev
@@ -143,7 +143,7 @@ binary_sensor:
         input: true
         pullup: false  # divider provides pull-up; internal pull-up would raise LOW to ~0.94V (ambiguous)
       inverted: true   # NPN active-low: GPIO LOW = beam broken = sensor ON
-    name: "Beam"
+    name: "Beam interruption sensor"
     id: beam_sensor
     # web_server:
     #   sorting_group_id: group_status
