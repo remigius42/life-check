@@ -32,8 +32,8 @@ display:
       it.printf(0, 20, id(font_small), "Today: %d", id(today_count));
       // it.printf(0, 40, id(font_small), "Batt: %.2fV %s", id(battery_voltage).state, id(battery_level).state.c_str());
 
-# Battery monitoring — requires a 100kΩ+100kΩ voltage divider soldered from the
-# battery+ pad (board underside) to GPIO34 and GND. See docs/esp32.md#battery-monitoring.
+# Battery monitoring — illustrative only; not intended for production (see docs/esp32.md#battery-monitoring).
+# Requires a 100kΩ+100kΩ voltage divider from the battery+ pad (board underside) to GPIO34 and GND.
 # Also uncomment the battery line (// it.printf ...) in the display lambda above.
 # sensor:
 #   - platform: adc

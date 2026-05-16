@@ -38,6 +38,13 @@ The firmware SHALL include a read-only `text_sensor` named "Battery Level" that 
 
 ---
 
+### Requirement: Battery monitoring is illustrative only
+Battery monitoring is an optional, illustrative feature. The TTGO includes an 18650 holder, but this setup is NOT intended for unattended production use — the boost converter cannot guarantee a stable 5 V supply under WiFi TX load, which can cause false beam-break counts. Documentation SHALL make this limitation explicit.
+
+#### Scenario: Production use warning is documented
+- **WHEN** a user reads the battery monitoring section of `docs/esp32.md`
+- **THEN** they SHALL see a note that battery operation is not intended for production use and that mains power is required for reliable deployments
+
 ### Requirement: Battery wiring via external voltage divider
 The TTGO board does not include a built-in battery monitoring circuit. Users SHALL wire a 100kΩ+100kΩ resistor voltage divider from the battery+ through-hole pad (underside of board) to GPIO34 and GND header pins. This is a one-time hardware modification documented in `docs/esp32.md`.
 

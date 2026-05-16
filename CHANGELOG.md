@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### ESP32 / ESPHome route
+
+- Battery monitoring documented as illustrative only — not intended for
+  production use, as the boost converter cannot guarantee a stable 5 V supply
+  under WiFi TX load at all battery charge levels
+
 ## [2.2.0] - 2026-05-15
 
 ### Changed

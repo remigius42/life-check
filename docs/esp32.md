@@ -27,10 +27,6 @@ resistor divider (10 kΩ series + 20 kΩ to GND) to the GPIO set in the `substit
 internal pull-up on the GPIO (the divider acts as the pull-up; enabling the internal pull-up raises
 the LOW voltage to ~0.94 V, above the detection threshold).
 
-> **Running on battery?** See the [TTGO battery monitoring](#battery-monitoring) section for the
-> voltage divider wiring pattern, ADC sensor config, and the debounce warning that applies to
-> any battery-powered ESP32. The relevant config lives in `esphome/packages/ttgo.yaml`.
-
 ### TTGO all-in-one board
 
 The TTGO (WROOM + 18650 + OLED) hard-wires GPIO 4 and 5 to the onboard OLED
@@ -55,6 +51,12 @@ battery blocks, and the battery line in the display lambda.
 > failures result from this wiring.
 
 #### Battery monitoring
+
+> **Note:** Battery monitoring is an optional, illustrative feature. The TTGO
+> includes an 18650 holder, but this setup is not intended for unattended
+> battery operation — the boost converter cannot guarantee a stable 5 V supply
+> under WiFi TX load, which can cause false beam-break counts. Use mains power
+> for production deployments.
 
 The TTGO board has no built-in battery monitoring circuit. To enable the
 "Battery Voltage" and "Battery Level" sensors, wire a voltage divider from the
