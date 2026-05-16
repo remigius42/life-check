@@ -4,6 +4,7 @@ Copyright 2026 [Andreas Remigius Schmidt](https://github.com/remigius42)
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20OS%20Bookworm-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-ESP32%20%2B%20ESPHome-lightgrey.svg)
 [![CI](https://github.com/remigius42/life-check/actions/workflows/ci.yml/badge.svg)](https://github.com/remigius42/life-check/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/tag/remigius42/life-check?sort=semver)](https://github.com/remigius42/life-check/tags)
 
