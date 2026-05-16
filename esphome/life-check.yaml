@@ -1,4 +1,10 @@
 # spellchecker:ignore esphome gfonts isnan npos oled pullup roboto sntp tmpl ttgo useragent
+
+# TTGO all-in-one board (WROOM + 18650 + OLED): uncomment the line below to enable
+# the onboard OLED display. See docs/esp32.md#ttgo-all-in-one-board for full setup.
+# packages:
+#   ttgo: !include packages/ttgo.yaml
+
 substitutions:
   # Web server version: 2 (stable, recommended for WROOM) or 3 (groups, graph, OTA UI).
   # v3 on S3: stack overflow crash fixed in 2026.3.2 (https://github.com/esphome/esphome/issues/14991).
@@ -24,7 +30,7 @@ esphome:
   min_version: "2024.6.0"
   project:
     name: "remigius42.life-check"
-    version: "2.1.0"
+    version: "2.2.0"
 
 esp32:
   board: esp32dev
@@ -154,22 +160,6 @@ binary_sensor:
             - lambda: 'id(today_count) += 1;'
 
 sensor:
-  # TTGO all-in-one board only: uncomment the battery entry below.
-  # Requires a 100kΩ+100kΩ voltage divider soldered from the battery+ pad to GPIO34.
-  # Also uncomment battery_level in text_sensor below, and line 3 of the display lambda.
-  # - platform: adc
-  #   pin: GPIO34
-  #   name: "Battery Voltage"
-  #   id: battery_voltage
-  #   update_interval: 60s
-  #   attenuation: 11db
-  #   filters:
-  #     - multiply: 2.0
-  #   unit_of_measurement: "V"
-  #   accuracy_decimals: 2
-  #   # web_server:
-  #   #   sorting_group_id: group_system
-  #   #   sorting_weight: 3
   - platform: template
     name: "Today's Break Count"
     id: today_count_sensor
@@ -182,20 +172,6 @@ sensor:
     accuracy_decimals: 0
 
 text_sensor:
-  # TTGO only — uncomment together with battery_voltage above and display line 3 below.
-  # - platform: template
-  #   name: "Battery Level"
-  #   id: battery_level
-  #   update_interval: 60s
-  #   # web_server:
-  #   #   sorting_group_id: group_system
-  #   #   sorting_weight: 4
-  #   lambda: |-
-  #     float v = id(battery_voltage).state;
-  #     if (isnan(v) || v < 2.5f) return {"??"};
-  #     if (v >= 4.0f)            return {"Good"};
-  #     if (v >= 3.6f)            return {"OK"};
-  #     return {"Low"};
   - platform: template
     name: "Daily History"
     id: daily_history_sensor
@@ -442,29 +418,3 @@ script:
                     - logger.log:
                         level: ERROR
                         format: "Webhook failed after all attempts (network error)"
-
-# TTGO all-in-one board only: uncomment the blocks below.
-# On boards without an OLED, these cause continuous I2C errors in the log.
-# The display lambda references battery_voltage and battery_level — uncomment all four
-# blocks together (i2c, font, display, and both battery sensor blocks above); leaving the
-# battery sensors commented out while the display is active causes a compile error.
-# Without the battery wiring, battery_voltage and battery_level will show "??" — that is expected.
-# See docs/esp32.md#ttgo-all-in-one-board for wiring and setup notes.
-# i2c:
-#   scl: GPIO4
-#   sda: GPIO5  # GPIO5 is a strapping pin (VDDSDIO); ESPHome warns about this.
-#               # Safe on TTGO: GPIO5 must be HIGH at boot, I2C pull-ups keep it HIGH.
-
-# font:
-#   - file: "gfonts://Roboto"
-#     id: font_small
-#     size: 14
-
-# display:
-#   - platform: ssd1306_i2c
-#     model: "SSD1306 128x64"
-#     address: 0x3C
-#     lambda: |-
-#       it.printf(0,  0, id(font_small), id(beam_sensor).state ? "BEAM: broken" : "BEAM: clear");
-#       it.printf(0, 20, id(font_small), "Today: %d", id(today_count));
-#       it.printf(0, 40, id(font_small), "Batt: %.2fV %s", id(battery_voltage).state, id(battery_level).state.c_str());

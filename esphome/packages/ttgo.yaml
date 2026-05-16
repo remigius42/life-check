@@ -1,0 +1,66 @@
+# spellchecker:ignore gfonts isnan roboto
+
+# TTGO all-in-one board package (WROOM + 18650 holder + SSD1306 OLED).
+# See docs/esp32.md#ttgo-all-in-one-board for wiring and opt-in instructions.
+#
+# Opt-in (two steps):
+#   1. Uncomment the `packages:` entry in life-check.yaml  →  enables OLED display
+#   2. Uncomment the battery blocks below                  →  enables battery monitoring
+#
+# Note on comment styles: battery sensor blocks are commented with YAML `#`.
+# The battery line inside the display lambda is commented with C++ `//` — YAML `#`
+# is not valid inside a literal block scalar (it would be a preprocessor directive).
+
+i2c:
+  scl: GPIO4
+  sda: GPIO5  # GPIO5 is a strapping pin (VDDSDIO); ESPHome warns about this.
+              # Safe on TTGO: GPIO5 must be HIGH at boot, I2C pull-ups keep it HIGH.
+
+font:
+  - file: "gfonts://Roboto"
+    id: font_small
+    size: 14
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    address: 0x3C
+    # Battery line below uses `//` (C++ comment) — `#` inside a lambda is a preprocessor directive.
+    # See battery blocks below to enable.
+    lambda: |-
+      it.printf(0,  0, id(font_small), id(beam_sensor).state ? "BEAM: broken" : "BEAM: clear");
+      it.printf(0, 20, id(font_small), "Today: %d", id(today_count));
+      // it.printf(0, 40, id(font_small), "Batt: %.2fV %s", id(battery_voltage).state, id(battery_level).state.c_str());
+
+# Battery monitoring — requires a 100kΩ+100kΩ voltage divider soldered from the
+# battery+ pad (board underside) to GPIO34 and GND. See docs/esp32.md#battery-monitoring.
+# Also uncomment the battery line (// it.printf ...) in the display lambda above.
+# sensor:
+#   - platform: adc
+#     pin: GPIO34
+#     name: "Battery Voltage"
+#     id: battery_voltage
+#     update_interval: 60s
+#     attenuation: 11db
+#     filters:
+#       - multiply: 2.0
+#     unit_of_measurement: "V"
+#     accuracy_decimals: 2
+#     # web_server:
+#     #   sorting_group_id: group_system
+#     #   sorting_weight: 3
+
+# text_sensor:
+#   - platform: template
+#     name: "Battery Level"
+#     id: battery_level
+#     update_interval: 60s
+#     # web_server:
+#     #   sorting_group_id: group_system
+#     #   sorting_weight: 4
+#     lambda: |-
+#       float v = id(battery_voltage).state;
+#       if (isnan(v) || v < 2.5f) return {"??"};
+#       if (v >= 4.0f)            return {"Good"};
+#       if (v >= 3.6f)            return {"OK"};
+#       return {"Low"};

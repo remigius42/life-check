@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-05-15
+
+### Changed
+
+#### ESP32 / ESPHome route
+
+- TTGO-specific config (i2c, font, display, battery sensors) extracted from `life-check.yaml`
+  into `esphome/packages/ttgo.yaml`; opt-in changes from "uncomment four inline blocks" to
+  "uncomment one `packages:` line" — OLED only by default, battery sensors commented out within
+  the package for boards without battery wiring
+
 ## [2.1.0] - 2026-05-15
 
 ### Added
@@ -104,4 +115,5 @@ ______________________________________________________________________
 [1.0.0]: https://github.com/remigius42/life-check/releases/tag/v1.0.0
 [2.0.0]: https://github.com/remigius42/life-check/compare/v1.0.0...v2.0.0
 [2.1.0]: https://github.com/remigius42/life-check/compare/v2.0.0...v2.1.0
-[unreleased]: https://github.com/remigius42/life-check/compare/v2.1.0...HEAD
+[2.2.0]: https://github.com/remigius42/life-check/compare/v2.1.0...v2.2.0
+[unreleased]: https://github.com/remigius42/life-check/compare/v2.2.0...HEAD

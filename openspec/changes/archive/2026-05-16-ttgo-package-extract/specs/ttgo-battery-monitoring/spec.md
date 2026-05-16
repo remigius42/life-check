@@ -1,8 +1,4 @@
-## Purpose
-
-TTGO all-in-one board (ESP32-WROOM + 18650 holder + SSD1306 OLED) battery monitoring: ADC-based battery voltage sensing via a 1:2 resistor voltage divider on GPIO34, human-readable level label, and optional hardware wiring.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Battery voltage ADC sensor
 The firmware SHALL include an ADC sensor on GPIO34 with 11dB attenuation and a `multiply: 2.0` filter to correct for the 1:2 resistor voltage divider. The sensor SHALL be named "Battery Voltage", report in volts with 2 decimal places, and update every 60 seconds. The sensor SHALL be exposed in the web UI. A commented-out `web_server` sorting block SHALL be included (`group_system`, `sorting_weight: 3`) for use when web server v3 is enabled. This sensor SHALL reside in `esphome/packages/ttgo.yaml`, commented out by default within the package, and is active only when explicitly uncommented by the user.
@@ -35,12 +31,3 @@ The firmware SHALL include a read-only `text_sensor` named "Battery Level" that 
 #### Scenario: GPIO floating or sensor uninitialized
 - **WHEN** battery voltage is NaN or < 2.5V
 - **THEN** Battery Level reads `??`
-
----
-
-### Requirement: Battery wiring via external voltage divider
-The TTGO board does not include a built-in battery monitoring circuit. Users SHALL wire a 100kΩ+100kΩ resistor voltage divider from the battery+ through-hole pad (underside of board) to GPIO34 and GND header pins. This is a one-time hardware modification documented in `docs/esp32.md`.
-
-#### Scenario: User wires voltage divider
-- **WHEN** a user solders a wire to the battery+ pad and connects the divider to GPIO34 and GND
-- **THEN** the battery voltage and level sensors report accurate values

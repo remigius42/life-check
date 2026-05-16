@@ -27,18 +27,27 @@ resistor divider (10 kΩ series + 20 kΩ to GND) to the GPIO set in the `substit
 internal pull-up on the GPIO (the divider acts as the pull-up; enabling the internal pull-up raises
 the LOW voltage to ~0.94 V, above the detection threshold).
 
+> **Running on battery?** See the [TTGO battery monitoring](#battery-monitoring) section for the
+> voltage divider wiring pattern, ADC sensor config, and the debounce warning that applies to
+> any battery-powered ESP32. The relevant config lives in `esphome/packages/ttgo.yaml`.
+
 ### TTGO all-in-one board
 
 The TTGO (WROOM + 18650 + OLED) hard-wires GPIO 4 and 5 to the onboard OLED
 display (SCL=4, SDA=5). Use **GPIO 13** (or any other free pin) for the sensor
 and update `beam_gpio_pin` in the `substitutions:` block of `esphome/life-check.yaml` accordingly.
 
-To enable the OLED display (shows beam state, today's break count, and battery level), uncomment
-the `i2c`, `font`, and `display` blocks at the bottom of `esphome/life-check.yaml`, along with
-the two battery sensor blocks (`battery_voltage`, `battery_level`) in the `sensor:` and
-`text_sensor:` sections. These four blocks are meant to be enabled or disabled together —
-leaving the battery sensors active without the wiring results in permanent `??` readings in the
-web UI; leaving them commented out while the display is active causes a compile error.
+To enable the OLED display (shows beam state and today's break count), uncomment the
+`packages:` entry near the top of `esphome/life-check.yaml`:
+
+```yaml
+packages:
+  ttgo: !include packages/ttgo.yaml
+```
+
+To also enable battery monitoring (requires voltage divider wiring — see below), open
+`esphome/packages/ttgo.yaml` and additionally uncomment the `sensor:` and `text_sensor:`
+battery blocks, and the battery line in the display lambda.
 
 > **Note:** ESPHome will warn that GPIO5 is a strapping pin (it controls VDDSDIO
 > voltage selection at boot). This is expected and safe on the TTGO board: GPIO5
