@@ -1,4 +1,4 @@
-<!-- spellchecker: ignore pinout -->
+<!-- spellchecker: ignore pinout ratioed -->
 
 # Hardware Wiring Notes
 
@@ -26,15 +26,29 @@ ESP32 LOW threshold: ~0.825V (0.25 × 3.3V). ~0V is well below it. ✓
 
 **Do NOT enable the ESP32 internal pull-up** (`pullup: false` on the GPIO). The divider itself provides the pull-up via the sensor's internal resistor. Enabling the internal pull-up (~45 kΩ to 3.3V) in parallel with the 20 kΩ to GND would raise the LOW voltage and risk a missed detection.
 
-## Why the Pi needs a BSS138 instead
+## Why the Pi uses a BSS138 instead of a divider
 
-The Pi daemon explicitly enables the internal GPIO pull-up (~50 kΩ to 3.3V) as a fallback. With a divider in place, when the NPN activates (beam broken), the LOW voltage at GPIO becomes:
+A correctly ratioed divider — one that keeps the GPIO pin at or below 3.3 V under
+worst-case conditions — is electrically safe. 3.3 V is the chip's operating voltage;
+there is no damage mechanism below it. The 10 kΩ/20 kΩ divider used for the ESP32
+produces up to 3.5 V at 5.25 V USB, which exceeds 3.3 V and is therefore not
+suitable for the Pi as-is, but tuning the ratio (e.g. 10 kΩ/15 kΩ → 3.15 V at
+5.25 V) would make it safe.
 
-```
-V = 3.3V × 20kΩ / (50kΩ + 20kΩ) ≈ 0.94V
-```
+The BSS138 is specified anyway for practical reasons, not electrical ones:
 
-Pi GPIO LOW threshold is ~0.8V. **0.94V is above the threshold** → unreliable LOW detection. The BSS138 active level shifter properly isolates the two voltage domains and avoids this problem.
+- **No math required.** The shifter handles any input up to its HV rail; no ratio
+  calculation, no resistor tolerance check, no dependency on knowing the exact
+  maximum voltage your specific power supply produces.
+- **Proper domain isolation.** The LV side is clamped to the Pi's 3.3 V rail
+  regardless of what happens on the HV side.
+- **Pull-ups included.** BSS138 modules include pull-ups on both sides, so the
+  NPN open-collector output gets a defined HIGH state without any additional
+  components.
+
+Note: the Pi daemon also enables the internal GPIO pull-up (~50 kΩ to 3.3 V) as a
+fallback. This interacts with any external resistors on the signal line but does not
+cause a problem with the BSS138, since the shifter isolates the two sides.
 
 **Why CodeRabbit's suggested swap (22 kΩ upper / 10 kΩ lower) is wrong:**
 

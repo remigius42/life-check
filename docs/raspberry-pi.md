@@ -1,6 +1,6 @@
 <!-- spellchecker:ignore armhf avahi cmdline conv customisation firstboot firstrun -->
 
-<!-- spellchecker:ignore imager pinout purecrea raspi raspios rootwait romakev -->
+<!-- spellchecker:ignore imager pinout purecrea raspi raspios retuned rootwait romakev -->
 
 # Raspberry Pi Route
 
@@ -28,6 +28,15 @@ pull-up to 3.3V is required on the LV side of the shifter. Most BSS138-based
 shifter boards include pull-ups on both sides; the daemon also enables the Pi's
 internal pull-up (~50 kΩ) as a fallback. Use pin 9 (GND) and pin 2 or 4 (5 V)
 for sensor power.
+
+> **Why not a resistor divider?** The [ESP32 route](esp32.md) uses a 10 kΩ/20 kΩ
+> divider instead of a shifter. That specific divider produces up to 3.5 V at
+> 5.25 V USB — above the Pi's 3.3 V operating voltage, so it is not suitable
+> here. A retuned ratio (e.g. 10 kΩ/15 kΩ) would keep the pin at or below 3.3 V
+> and is electrically safe. The BSS138 requires more wiring (power on both the
+> LV and HV sides), but it is specified because it needs no ratio calculation,
+> no resistor sourcing, includes pull-ups on both sides, and properly isolates
+> the two voltage domains.
 
 ## 3D Printed Housing
 
