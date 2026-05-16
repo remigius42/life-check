@@ -37,3 +37,8 @@ Python files are formatted with **Black** and linted with **Ruff**; type-checked
 
 The `esphome/` tree is compiled with `.venv/bin/esphome compile esphome/life-check.yaml`.
 Optional TTGO OLED package: uncomment the `packages:` block in `life-check.yaml` (see `docs/esp32.md`).
+
+## Release
+
+- Sync `esphome.project.version` in `esphome/life-check.yaml` with the new version
+- Annotated tag message must include the `CHANGELOG.md` entry for that version
