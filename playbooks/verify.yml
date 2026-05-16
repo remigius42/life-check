@@ -212,6 +212,18 @@
         that: "(_web_service_unit.content | b64decode) is search('Environment=DETECTOR_RESET_SENTINEL=')"
         fail_msg: "DETECTOR_RESET_SENTINEL environment variable not found in beam-detector-web.service"
 
+    - name: Assert DETECTOR_VERSION is set to a non-empty value in service
+      ansible.builtin.assert:
+        that: "(_web_service_unit.content | b64decode) is search('Environment=DETECTOR_VERSION=.+')"
+        fail_msg: "DETECTOR_VERSION environment variable not found or empty in beam-detector-web.service"
+
+    - name: Extract DETECTOR_VERSION from service unit
+      ansible.builtin.set_fact:
+        _deployed_version: >-
+          {{ (_web_service_unit.content | b64decode)
+             | regex_search('Environment=DETECTOR_VERSION=(.+)', '\1')
+             | first }}
+
     - name: Fetch web UI index page
       ansible.builtin.uri:
         url: "http://localhost:{{ detector_web_port | default(8080) }}/"
@@ -228,3 +240,8 @@
           - "_web_ui_index.content is search('id=\"github-link\"')"
           - "_web_ui_index.content is search('class=\"container\"')"
         fail_msg: "Web UI is missing branding or key elements (Life Check title, reset-count ID, history ID, github-link ID, or container class)"
+
+    - name: Assert deployed version string appears in web UI
+      ansible.builtin.assert:
+        that: "_web_ui_index.content is search(_deployed_version)"
+        fail_msg: "Deployed version '{{ _deployed_version }}' not found in web UI HTML"

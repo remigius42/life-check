@@ -27,6 +27,7 @@ COUNTS_PATH = Path(
     os.environ.get("DETECTOR_COUNTS_PATH", "/var/lib/beam_detector/counts.json")
 )
 PICO_CSS = os.environ.get("DETECTOR_PICO_CSS", "pico-2.1.1.min.css")
+PROJECT_VERSION = os.environ.get("DETECTOR_VERSION", "unknown")
 
 app = Flask(__name__, static_folder=STATIC_DIR)
 
@@ -157,6 +158,8 @@ def index():
            target="_blank" rel="noopener noreferrer">
           View on GitHub
         </a>
+        &nbsp;·&nbsp;
+        <span id="version">{PROJECT_VERSION}</span>
       </p>
     </footer>
   </main>

@@ -222,6 +222,10 @@
   become: true
   notify: Restart beam-detector-web
 
+- name: Capture project version from git
+  ansible.builtin.set_fact:
+    detector_version: "{{ lookup('pipe', 'git describe --tags') }}"
+
 - name: Deploy web systemd service unit
   ansible.builtin.template:
     src: beam-detector-web.service.j2

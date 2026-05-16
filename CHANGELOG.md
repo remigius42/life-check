@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-05-16
+
+### Added
+
+#### Raspberry Pi route
+
+- Project version now shown in the web UI footer (e.g. `v2.3.0` or
+  `v2.3.0-3-g543b3e5`), captured at Ansible deploy time via `git describe --tags`
+  and injected as `DETECTOR_VERSION` into the systemd service environment
+
 ## [2.2.1] - 2026-05-16
 
 ### Changed

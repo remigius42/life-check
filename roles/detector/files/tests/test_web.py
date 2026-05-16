@@ -174,6 +174,22 @@ class TestIndexAndStream(unittest.TestCase):
         self.assertIn(b'id="history"', resp.data)
         self.assertIn(b'class="container"', resp.data)
 
+    def test_index_shows_version_from_env(self):
+        with patch.dict(os.environ, {"DETECTOR_VERSION": "v9.9.9-test"}):
+            importlib.reload(self.mod)
+            client = self.mod.app.test_client()
+            resp = client.get("/")
+        self.assertIn(b"v9.9.9-test", resp.data)
+        self.assertIn(b'id="version"', resp.data)
+
+    def test_index_shows_unknown_when_version_unset(self):
+        env = {k: v for k, v in os.environ.items() if k != "DETECTOR_VERSION"}
+        with patch.dict(os.environ, env, clear=True):
+            importlib.reload(self.mod)
+            client = self.mod.app.test_client()
+            resp = client.get("/")
+        self.assertIn(b"unknown", resp.data)
+
     def test_index_shows_history_table(self):
         h_data = {"2026-05-09": 123}
         self.counts.write_text(

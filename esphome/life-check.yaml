@@ -30,7 +30,7 @@ esphome:
   min_version: "2024.6.0"
   project:
     name: "remigius42.life-check"
-    version: "2.2.1"
+    version: "2.3.0"
 
 esp32:
   board: esp32dev
