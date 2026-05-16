@@ -178,13 +178,13 @@ refuse to run because `ansible.cfg` sets `vault_password_file = .vault_pass`.
 ### 5. Run the playbook
 
 ```bash
-ansible-playbook playbooks/site.yml --ask-pass
+ansible-playbook playbooks/site.yml --ask-pass --ask-become-pass
 ```
 
 ### 6. Verify
 
 ```bash
-ansible-playbook playbooks/verify.yml --ask-pass
+ansible-playbook playbooks/verify.yml --ask-pass --ask-become-pass
 ```
 
 The verify playbook asserts expected post-state on the target host.
