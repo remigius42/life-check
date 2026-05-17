@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import unittest
 from datetime import date, datetime
 from datetime import time as dtime
@@ -373,12 +374,153 @@ class TestPrivacyWindow(unittest.TestCase):
         mod = self._load_with_times("01:00", "08:00")
         self.assertFalse(self._check(mod, dtime(8, 0)))  # end boundary is exclusive
 
+    def test_report_time_equals_window_end_daytime_not_in_window(self):
+        # report_time == window_end (degenerate config) must not make sensor always off
+        mod = self._load_with_times("08:00", "08:00")
+        self.assertFalse(self._check(mod, dtime(12, 0)))
+
     def test_in_window_at_start_boundary_with_nonzero_seconds(self):
         # now=17:00:30 strips to 17:00:00 which equals start — still in window
         mod = self._load_with_times("17:00", "08:00")
         with patch("web.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 1, 1, 17, 0, 30)
             self.assertTrue(mod._in_privacy_window())
+
+
+class TestWatchHaStateRestart(unittest.TestCase):
+    """
+    _watch_ha_state must reflect real count at startup,
+    not assume last_crossed=False.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_ha_ok_set_immediately_when_already_above_threshold(self):
+        """
+        Restart while count >= threshold: _ha_ok True immediately,
+        no jitter timer.
+        """
+        setattr(self.mod, "_ha_ok", False)
+        setattr(self.mod, "_ha_timer", None)
+
+        above_threshold = self.mod._HA_THRESHOLD + 1
+
+        with patch.object(self.mod, "_read_counts", return_value=(above_threshold, [])):
+            with patch.object(self.mod, "time") as mock_time:
+                mock_time.sleep.side_effect = SystemExit
+                try:
+                    self.mod._watch_ha_state()
+                except SystemExit:
+                    pass
+
+        self.assertTrue(self.mod._ha_ok)
+        self.assertIsNone(self.mod._ha_timer)
+
+
+class TestWatchHaStatePrivacyWindowTransition(unittest.TestCase):
+    """Threshold crossing during the privacy window must not start jitter timer."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _run_one_watcher_cycle(self, initial_count, loop_count, in_privacy):
+        """
+        Run _watch_ha_state through exactly one loop iteration.
+        initial_count: returned on the pre-loop _read_counts call (sets last_crossed).
+        loop_count: returned on the in-loop _read_counts call.
+        in_privacy: return value for _in_privacy_window().
+        """
+        counts = iter([(initial_count, []), (loop_count, [])])
+        setattr(self.mod, "_ha_ok", False)
+        setattr(self.mod, "_ha_timer", None)
+        with patch.object(self.mod, "_read_counts", side_effect=counts):
+            with patch.object(self.mod, "_in_privacy_window", return_value=in_privacy):
+                with patch.object(self.mod, "_maybe_start_jitter_timer") as mock_jitter:
+                    with patch.object(self.mod, "time") as mock_time:
+                        mock_time.sleep.side_effect = SystemExit
+                        try:
+                            self.mod._watch_ha_state()
+                        except SystemExit:
+                            pass
+        return mock_jitter
+
+    def test_no_jitter_timer_when_threshold_crossed_in_privacy_window(self):
+        threshold = self.mod._HA_THRESHOLD
+        mock_jitter = self._run_one_watcher_cycle(
+            initial_count=0, loop_count=threshold, in_privacy=True
+        )
+        mock_jitter.assert_not_called()
+        self.assertFalse(self.mod._ha_ok)
+
+    def test_jitter_timer_started_when_threshold_crossed_outside_privacy_window(self):
+        threshold = self.mod._HA_THRESHOLD
+        mock_jitter = self._run_one_watcher_cycle(
+            initial_count=0, loop_count=threshold, in_privacy=False
+        )
+        mock_jitter.assert_called_once()
+
+
+class TestWatcherThread(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_only_one_watcher_thread_after_multiple_reloads(self):
+        _load_web(Path(self.tmp.name))
+        _load_web(Path(self.tmp.name))
+        ha_watchers = [t for t in threading.enumerate() if t.name == "ha-watcher"]
+        self.assertEqual(len(ha_watchers), 1)
+
+
+class TestJitterConfig(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_negative_jitter_env_var_clamped_to_zero(self):
+        env = {"DETECTOR_HA_JITTER_MAX_ADD_S": "-1800"}
+        with patch.dict(os.environ, env):
+            mod, *_ = _load_web(Path(self.tmp.name))
+        self.assertGreaterEqual(mod._HA_JITTER_MAX_ADD_S, 0)
+
+
+class TestHaThresholdValidation(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _load_with_threshold(self, value: str):
+        env = {"DETECTOR_REPORT_THRESHOLD": value}
+        with patch.dict(os.environ, env):
+            mod, *_ = _load_web(Path(self.tmp.name))
+        return mod
+
+    def test_zero_threshold_clamped_to_one(self):
+        mod = self._load_with_threshold("0")
+        self.assertEqual(mod._HA_THRESHOLD, 1)
+
+    def test_negative_threshold_clamped_to_one(self):
+        mod = self._load_with_threshold("-5")
+        self.assertEqual(mod._HA_THRESHOLD, 1)
+
+    def test_positive_threshold_preserved(self):
+        mod = self._load_with_threshold("3")
+        self.assertEqual(mod._HA_THRESHOLD, 3)
 
 
 class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
@@ -425,6 +567,48 @@ class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
             mock_dt.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
             resp = client.get("/home-assistant")
         self.assertEqual(resp.get_json(), {"state": "not_ok"})
+
+
+class TestJitterCallbackEpochRace(unittest.TestCase):
+    """
+    _jitter_callback must not commit _ha_ok=True when _ha_epoch is bumped
+    between the initial epoch check and the final _set_ha_ok call.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_stale_callback_does_not_set_ha_ok(self):
+        setattr(self.mod, "_ha_ok", False)
+        setattr(self.mod, "_ha_epoch", 0)
+        setattr(self.mod, "_ha_timer", None)
+
+        # Synchronization: pause _jitter_callback after it passes the epoch
+        # check (inside _read_counts) so the main thread can bump _ha_epoch.
+        in_read_counts = threading.Event()
+        resume = threading.Event()
+
+        def slow_read_counts():
+            in_read_counts.set()
+            resume.wait()
+            return (self.mod._HA_THRESHOLD, [])  # count is above threshold
+
+        with patch.object(self.mod, "_read_counts", side_effect=slow_read_counts):
+            t = threading.Thread(target=self.mod._jitter_callback, args=(0,))
+            t.start()
+            in_read_counts.wait()  # callback is past epoch check
+            self.mod._cancel_ha_timer()  # bump _ha_epoch to 1
+            resume.set()  # let callback proceed to _set_ha_ok
+            t.join(timeout=2)
+
+        self.assertFalse(
+            self.mod._ha_ok,
+            "_ha_ok must not be set when epoch was superseded after the initial check",
+        )
 
 
 if __name__ == "__main__":

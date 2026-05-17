@@ -210,8 +210,9 @@ checks this state at report time and alerts if it has not yet turned ON.
 ### Privacy model
 
 The HA sensor operates within a **daytime window** only. Outside this window —
-from the configured report time each evening until `ha_privacy_window_end_hour:ha_privacy_window_end_minute`
-each morning (default 17:00–08:00, crossing midnight) — the sensor is always
+from the configured report time each evening (or midnight, whichever is earlier)
+until `ha_privacy_window_end_hour:ha_privacy_window_end_minute` each morning
+(default 17:00–08:00, crossing midnight) — the sensor is always
 **OFF**, regardless of the crossing count. This is the **privacy window**.
 
 The privacy window means that nighttime activity is structurally invisible in HA

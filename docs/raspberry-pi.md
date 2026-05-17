@@ -260,8 +260,9 @@ automatically by the Ansible role via the `detector_*` variables:
 ### Privacy model
 
 The HA sensor operates within a **daytime window** only. Outside this window —
-from `DETECTOR_REPORT_TIME` each evening until `DETECTOR_HA_PRIVACY_WINDOW_END`
-each morning (default 17:00–08:00, crossing midnight) — the endpoint always
+from `DETECTOR_REPORT_TIME` each evening (or midnight, whichever is earlier)
+until `DETECTOR_HA_PRIVACY_WINDOW_END` each morning (default 17:00–08:00,
+crossing midnight) — the endpoint always
 returns `not_ok`, regardless of the beam count. This is the **privacy window**.
 
 The privacy window means that nighttime activity is structurally invisible in HA

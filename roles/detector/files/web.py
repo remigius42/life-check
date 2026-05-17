@@ -33,7 +33,7 @@ COUNTS_PATH = Path(
 PICO_CSS = os.environ.get("DETECTOR_PICO_CSS", "pico-2.1.1.min.css")
 PROJECT_VERSION = os.environ.get("DETECTOR_VERSION", "unknown")
 
-_HA_THRESHOLD = int(os.environ.get("DETECTOR_REPORT_THRESHOLD", "1"))
+_HA_THRESHOLD = max(1, int(os.environ.get("DETECTOR_REPORT_THRESHOLD", "1")))
 
 
 # Privacy window: sensor returns not_ok from effective_start until window_end
@@ -53,7 +53,9 @@ _HA_PRIVACY_WINDOW_END = _parse_hhmm(
 # Jitter: [15, 60) min on daytime threshold-crossing transitions only.
 # Intentionally not a runtime-configurable setting — reducing this without
 # understanding the privacy model can silently erode protection.
-_HA_JITTER_MAX_ADD_S = int(os.environ.get("DETECTOR_HA_JITTER_MAX_ADD_S", "2700"))
+_HA_JITTER_MAX_ADD_S = max(
+    0, int(os.environ.get("DETECTOR_HA_JITTER_MAX_ADD_S", "2700"))
+)
 
 
 def _in_privacy_window() -> bool:
@@ -64,7 +66,7 @@ def _in_privacy_window() -> bool:
     now = datetime.now().time().replace(second=0, microsecond=0)
     start = _HA_REPORT_TIME
     end = _HA_PRIVACY_WINDOW_END
-    if start < end:  # midnight cap: report_time misconfigured into morning hours
+    if start <= end:  # midnight cap: report_time misconfigured into morning hours
         start = dtime(0, 0)
     if start == dtime(0, 0):
         return now < end
@@ -74,6 +76,7 @@ def _in_privacy_window() -> bool:
 _ha_ok: bool = False
 _ha_lock = threading.Lock()
 _ha_timer: threading.Timer | None = None
+_ha_epoch: int = 0
 
 
 def _set_ha_ok(value: bool) -> None:
@@ -82,21 +85,44 @@ def _set_ha_ok(value: bool) -> None:
         _ha_ok = value
 
 
+def _jitter_callback(epoch: int) -> None:
+    # Fast bail before the expensive _read_counts call.
+    with _ha_lock:
+        if epoch != _ha_epoch:
+            return
+    try:
+        count, _ = _read_counts()
+    except Exception:
+        count = 0
+    if count >= _HA_THRESHOLD:
+        # Re-check epoch atomically: _cancel_ha_timer may have bumped _ha_epoch
+        # between the early check above and here. Inline the assignment — calling
+        # _set_ha_ok while holding _ha_lock would deadlock (non-reentrant).
+        global _ha_ok
+        with _ha_lock:
+            if epoch == _ha_epoch:
+                _ha_ok = True
+
+
 def _maybe_start_jitter_timer() -> None:
     global _ha_timer
     if _ha_timer is not None and _ha_timer.is_alive():
         return  # timer already pending — subsequent crossings don't restart it
+    with _ha_lock:
+        epoch = _ha_epoch
     delay = 900 + random.random() * _HA_JITTER_MAX_ADD_S
-    _ha_timer = threading.Timer(delay, lambda: _set_ha_ok(True))
+    _ha_timer = threading.Timer(delay, _jitter_callback, args=(epoch,))
     _ha_timer.daemon = True
     _ha_timer.start()
 
 
 def _cancel_ha_timer() -> None:
-    global _ha_timer
+    global _ha_timer, _ha_epoch
     if _ha_timer is not None:
         _ha_timer.cancel()
         _ha_timer = None
+    with _ha_lock:
+        _ha_epoch += 1
 
 
 def _watch_ha_state() -> None:
@@ -104,13 +130,23 @@ def _watch_ha_state() -> None:
     Background thread: tracks threshold crossings and
     drives the jitter timer for _ha_ok.
     """
-    last_crossed = False
+    try:
+        count, _ = _read_counts()
+    except Exception:
+        count = 0
+    last_crossed = count >= _HA_THRESHOLD
+    if last_crossed:
+        _set_ha_ok(True)  # already crossed before restart — no jitter needed
     while True:
         try:
             count, _ = _read_counts()
             crossed = count >= _HA_THRESHOLD
             if crossed and not last_crossed:
-                _maybe_start_jitter_timer()
+                if not _in_privacy_window():
+                    _maybe_start_jitter_timer()
+                else:
+                    _cancel_ha_timer()
+                    _set_ha_ok(False)
             elif not crossed and last_crossed:
                 _cancel_ha_timer()
                 _set_ha_ok(False)  # midnight reset — no jitter (deterministic event)
@@ -122,7 +158,8 @@ def _watch_ha_state() -> None:
 
 app = Flask(__name__, static_folder=STATIC_DIR)
 
-threading.Thread(target=_watch_ha_state, daemon=True, name="ha-watcher").start()
+if not any(t.name == "ha-watcher" for t in threading.enumerate()):
+    threading.Thread(target=_watch_ha_state, daemon=True, name="ha-watcher").start()
 
 
 def _read_state() -> dict:
