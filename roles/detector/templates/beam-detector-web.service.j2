@@ -17,6 +17,10 @@ Environment=DETECTOR_STATIC_DIR="{{ detector_install_dir }}/static"
 Environment=DETECTOR_PICO_CSS="pico-{{ detector_pico_version }}.min.css"
 Environment=DETECTOR_VERSION={{ detector_version }}
 Environment=DETECTOR_RESET_SENTINEL="{{ detector_reset_sentinel_path }}"
+Environment=DETECTOR_REPORT_THRESHOLD={{ detector_report_threshold }}
+Environment=DETECTOR_REPORT_TIME={{ detector_report_time }}
+Environment=DETECTOR_HA_PRIVACY_WINDOW_END={{ detector_ha_privacy_window_end }}
+Environment=DETECTOR_HA_JITTER_MAX_ADD_S={{ detector_ha_jitter_max_add_s }}
 Restart=on-failure
 
 
