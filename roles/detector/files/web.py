@@ -84,12 +84,22 @@ def _set_ha_ok(value: bool) -> None:
         _ha_ok = value
 
 
+def _jitter_callback() -> None:
+    # Re-check threshold: a concurrent drop may have cancelled the timer too late.
+    try:
+        count, _ = _read_counts()
+    except Exception:
+        count = 0
+    if count >= _HA_THRESHOLD:
+        _set_ha_ok(True)
+
+
 def _maybe_start_jitter_timer() -> None:
     global _ha_timer
     if _ha_timer is not None and _ha_timer.is_alive():
         return  # timer already pending — subsequent crossings don't restart it
     delay = 900 + random.random() * _HA_JITTER_MAX_ADD_S
-    _ha_timer = threading.Timer(delay, lambda: _set_ha_ok(True))
+    _ha_timer = threading.Timer(delay, _jitter_callback)
     _ha_timer.daemon = True
     _ha_timer.start()
 
