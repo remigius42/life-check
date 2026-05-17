@@ -35,7 +35,8 @@ reboot (today's count is preserved).*
   history, test mode, and manual reset capability
 - Integrates with [Home Assistant](https://www.home-assistant.io) (both routes)
   via a binary status sensor with a nightly privacy window and randomized jitter
-  on daytime state transitions
+  on daytime `not_ok`→`ok` (recovery) transitions only; `ok`→`not_ok`
+  transitions (midnight reset) are immediate and deterministic
 
 ## Deployment routes
 

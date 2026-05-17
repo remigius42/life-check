@@ -256,6 +256,5 @@
       ansible.builtin.assert:
         that:
           - "_ha_endpoint.status == 200"
-          - "_ha_endpoint.json.state is defined"
-          - "_ha_endpoint.json.state in ['ok', 'not_ok']"
+          - "_ha_endpoint.json is mapping and _ha_endpoint.json.state is defined and _ha_endpoint.json.state in ['ok', 'not_ok']"
         fail_msg: "/home-assistant did not return a valid state (got: {{ _ha_endpoint.content }})"

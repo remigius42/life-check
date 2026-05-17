@@ -8,16 +8,22 @@ history is a presence/activity log.
 
 ## What Changes
 
-- Both routes expose a binary `ok`/`not_ok` status to Home Assistant, with a
-  [15, 60] min jitter on threshold-crossing transitions to prevent live
-  dashboard inference of crossing timing
+- Both routes expose a binary `ok`/`not_ok` status to Home Assistant; the
+  sensor is forced to `not_ok` during a nightly **privacy window** (from
+  `report_time` until a configurable morning end, default 08:00) regardless of
+  beam count — ESPHome via `binary_sensor` native API, Pi via `GET
+  /home-assistant` in `web.py` using `DETECTOR_REPORT_THRESHOLD` /
+  `DETECTOR_HA_JITTER_MAX_ADD_S`
+- Within the daytime window, threshold-crossing transitions are delayed by a
+  [15, 60) min jitter to prevent live dashboard inference of exact crossing timing
 - ESPHome: new `binary_sensor` via the native API; raw-data entities marked
   `internal: true`
-- Pi: new `GET /home-assistant` JSON endpoint in `web.py`; jitter implemented
-  via background watcher thread and `threading.Timer`; reuses
-  `DETECTOR_REPORT_THRESHOLD` already present in `reporter.py`
-- Docs updated for both routes covering the privacy model, jitter rationale,
-  and the sensor-failure assumption
+- Pi: new `GET /home-assistant` JSON endpoint in `web.py`; privacy window
+  checked live per request; jitter implemented via background watcher thread and
+  `threading.Timer`; reuses `DETECTOR_REPORT_THRESHOLD` already present in
+  `reporter.py`
+- Docs updated for both routes covering the privacy model, privacy window
+  rationale, jitter rationale, and the sensor-failure assumption
 
 ## Capabilities
 
