@@ -245,3 +245,17 @@
       ansible.builtin.assert:
         that: "_web_ui_index.content is search(_deployed_version)"
         fail_msg: "Deployed version '{{ _deployed_version }}' not found in web UI HTML"
+
+    - name: Fetch /home-assistant endpoint
+      ansible.builtin.uri:
+        url: "http://localhost:{{ detector_web_port | default(8080) }}/home-assistant"
+        return_content: true
+      register: _ha_endpoint
+
+    - name: Assert /home-assistant returns valid state
+      ansible.builtin.assert:
+        that:
+          - "_ha_endpoint.status == 200"
+          - "_ha_endpoint.json.state is defined"
+          - "_ha_endpoint.json.state in ['ok', 'not_ok']"
+        fail_msg: "/home-assistant did not return a valid state (got: {{ _ha_endpoint.content }})"

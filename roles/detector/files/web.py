@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: MIT
 
-# spellchecker: ignore noopener noreferrer
+# spellchecker: ignore dtime noopener noreferrer
 
 import json
 import logging
 import os
+import random
+import threading
 import time
-from datetime import date
+from datetime import date, datetime
+from datetime import time as dtime
 from pathlib import Path
 
 from flask import Flask, Response, redirect, url_for  # type: ignore[import-untyped]
@@ -29,7 +32,88 @@ COUNTS_PATH = Path(
 PICO_CSS = os.environ.get("DETECTOR_PICO_CSS", "pico-2.1.1.min.css")
 PROJECT_VERSION = os.environ.get("DETECTOR_VERSION", "unknown")
 
+_HA_THRESHOLD = int(os.environ.get("DETECTOR_REPORT_THRESHOLD", "1"))
+
+
+# Privacy window: sensor returns not_ok from effective_start until window_end
+# regardless of beam count. effective_start = DETECTOR_REPORT_TIME capped at
+# 00:00 if misconfigured. DETECTOR_HA_PRIVACY_WINDOW_END is intentionally not a
+# HA-configurable entity — changing it requires a service restart.
+def _parse_hhmm(val: str) -> dtime:
+    h, m = val.split(":")
+    return dtime(int(h), int(m))
+
+
+_HA_REPORT_TIME = _parse_hhmm(os.environ.get("DETECTOR_REPORT_TIME", "17:00"))
+_HA_PRIVACY_WINDOW_END = _parse_hhmm(
+    os.environ.get("DETECTOR_HA_PRIVACY_WINDOW_END", "08:00")
+)
+
+# Jitter: [15, 60) min on daytime threshold-crossing transitions only.
+# Intentionally not a runtime-configurable setting — reducing this without
+# understanding the privacy model can silently erode protection.
+_HA_JITTER_MAX_ADD_S = int(os.environ.get("DETECTOR_HA_JITTER_MAX_ADD_S", "2700"))
+
+
+def _in_privacy_window() -> bool:
+    now = datetime.now().time().replace(second=0, microsecond=0)
+    start = _HA_REPORT_TIME
+    end = _HA_PRIVACY_WINDOW_END
+    if start < end:  # midnight cap: report_time misconfigured into morning hours
+        start = dtime(0, 0)
+    if start == dtime(0, 0):
+        return now < end
+    return now >= start or now < end
+
+
+_ha_ok: bool = False
+_ha_lock = threading.Lock()
+_ha_timer: threading.Timer | None = None
+
+
+def _set_ha_ok(value: bool) -> None:
+    global _ha_ok
+    with _ha_lock:
+        _ha_ok = value
+
+
+def _maybe_start_jitter_timer() -> None:
+    global _ha_timer
+    if _ha_timer is not None and _ha_timer.is_alive():
+        return  # timer already pending — subsequent crossings don't restart it
+    delay = 900 + random.random() * _HA_JITTER_MAX_ADD_S
+    _ha_timer = threading.Timer(delay, lambda: _set_ha_ok(True))
+    _ha_timer.daemon = True
+    _ha_timer.start()
+
+
+def _cancel_ha_timer() -> None:
+    global _ha_timer
+    if _ha_timer is not None:
+        _ha_timer.cancel()
+        _ha_timer = None
+
+
+def _watch_ha_state() -> None:
+    last_crossed = False
+    while True:
+        try:
+            count, _ = _read_counts()
+            crossed = count >= _HA_THRESHOLD
+            if crossed and not last_crossed:
+                _maybe_start_jitter_timer()
+            elif not crossed and last_crossed:
+                _cancel_ha_timer()
+                _set_ha_ok(False)  # midnight reset — no jitter (deterministic event)
+            last_crossed = crossed
+        except Exception as exc:
+            _log.warning("HA watcher error: %s", exc)
+        time.sleep(1)
+
+
 app = Flask(__name__, static_folder=STATIC_DIR)
+
+threading.Thread(target=_watch_ha_state, daemon=True, name="ha-watcher").start()
 
 
 def _read_state() -> dict:
@@ -202,6 +286,15 @@ def stream():
         mimetype="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.get("/home-assistant")
+def home_assistant():
+    if _in_privacy_window():
+        return {"state": "not_ok"}
+    with _ha_lock:
+        ok = _ha_ok
+    return {"state": "ok" if ok else "not_ok"}
 
 
 @app.post("/test-mode/enable")

@@ -213,3 +213,84 @@ configured port).
 | [`detector`](../roles/detector/README.md) | Break-beam daemon, daily reporter, web UI               |
 
 Each role has its own `README.md` with variable reference and example playbook.
+
+## Home Assistant integration
+
+The Pi route exposes a `GET /home-assistant` endpoint that returns a JSON object
+indicating whether the daily crossing threshold has been met:
+
+```json
+{"state": "ok"}
+```
+
+or
+
+```json
+{"state": "not_ok"}
+```
+
+To add it to [Home Assistant](https://www.home-assistant.io), configure a
+[REST sensor](https://www.home-assistant.io/integrations/rest/) in your HA
+`configuration.yaml`:
+
+```yaml
+sensor:
+  - platform: rest
+    name: "Life Check"
+    resource: "http://<PI_HOSTNAME>.local:8080/home-assistant"
+    value_template: "{{ value_json.state }}"
+    scan_interval: 60
+```
+
+A typical automation checks this state at report time and alerts if it has not
+yet reached `ok`.
+
+### Configuration
+
+These environment variables control the HA integration behavior. They are set
+automatically by the Ansible role via the `detector_*` variables:
+
+| Variable                         | Default | Description                                                                                                       |
+| -------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------- |
+| `DETECTOR_REPORT_THRESHOLD`      | `2`     | Minimum crossings required for `ok` state (same as the daily reporter)                                            |
+| `DETECTOR_REPORT_TIME`           | `17:00` | Privacy window start time (`HH:MM`); must match the systemd timer schedule                                        |
+| `DETECTOR_HA_PRIVACY_WINDOW_END` | `08:00` | Privacy window end time (`HH:MM`); sensor returns `not_ok` until this time — see Privacy model below              |
+| `DETECTOR_HA_JITTER_MAX_ADD_S`   | `2700`  | Maximum additional jitter seconds added to the base 900 s floor for daytime transitions — see Privacy model below |
+
+### Privacy model
+
+The HA sensor operates within a **daytime window** only. Outside this window —
+from `DETECTOR_REPORT_TIME` each evening until `DETECTOR_HA_PRIVACY_WINDOW_END`
+each morning (default 17:00–08:00, crossing midnight) — the endpoint always
+returns `not_ok`, regardless of the beam count. This is the **privacy window**.
+
+The privacy window means that nighttime activity is structurally invisible in HA
+history. Jitter alone cannot guarantee this: even a 60-minute smear leaves
+habitual patterns detectable over time. The window eliminates the signal rather
+than obscuring it, consistent with the project goal of a minimally invasive life
+check that cannot be used for habit deduction.
+
+Within the daytime window, a state change from `not_ok` to `ok` is delayed by a
+random jitter of **15–60 minutes** to prevent a live observer from inferring the
+exact crossing time.
+
+To maintain this privacy boundary:
+
+- The raw crossing count and history are not exposed — only the binary `ok`/`not_ok`
+  state is returned.
+- The message templates (`DETECTOR_REPORT_MSG_OK` etc.) are not used here: they may
+  contain a `{count}` placeholder and would leak raw readings if exposed.
+- `DETECTOR_HA_PRIVACY_WINDOW_END` is intentionally **not** a HA-configurable
+  entity. It is set at deploy time via an Ansible variable and requires a service
+  restart to change — a HA-level actor cannot shrink the window.
+- `DETECTOR_HA_JITTER_MAX_ADD_S` is intentionally **not** surfaced as a web UI
+  setting. Reducing it without understanding the consequences can silently erode
+  protection.
+
+### Sensor-failure assumption
+
+A Pi that is online and returning `not_ok` is assumed to mean the person has not
+yet crossed the threshold today — not that the sensor is broken. If the Pi goes
+offline, Home Assistant natively marks the REST sensor as **unavailable**. Sensor
+hardware failure (beam sensor broken while Pi is running) is not a separately
+monitored failure mode.

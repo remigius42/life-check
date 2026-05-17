@@ -22,6 +22,14 @@ substitutions:
   msg_ok: "Beam breaks today: ✅ OK (equal or above threshold)"
   msg_low: "Beam breaks today: 🚨 under threshold"
   msg_zero: "Beam breaks today: 0 ⚠️ no breaks today, sensor might be down."
+  # Jitter added to HA status updates when threshold is first crossed: [15, 60) min.
+  # Intentionally a substitution, not a runtime UI setting — reducing this without
+  # understanding the privacy model can silently erode protection.
+  ha_jitter_max_add_s: "2700"
+  # Privacy window end: sensor returns OFF from report_time until this time each day.
+  # Intentionally substitutions, not runtime UI entities — must not be HA-configurable.
+  ha_privacy_window_end_hour: "8"
+  ha_privacy_window_end_minute: "0"
 
 esphome:
   name: life-check
@@ -30,7 +38,29 @@ esphome:
   min_version: "2024.6.0"
   project:
     name: "remigius42.life-check"
-    version: "2.3.0"
+    version: "2.4.0"
+  on_boot:
+    # Derive HA status from today_count (source of truth) rather than storing a
+    # duplicate via restore_value. This correctly handles a reboot after midnight
+    # rollover: today_count resets to 0 via NVS, so HA would correctly show not_ok
+    # even if the sensor was ok before the reboot.
+    priority: -100.0
+    then:
+      - lambda: &ha_status_publish_lambda |-
+          auto t = id(sntp_time).now();
+          bool in_window = false;
+          if (t.is_valid()) {
+            int now_m = t.hour * 60 + t.minute;
+            int end_m = ${ha_privacy_window_end_hour} * 60 + ${ha_privacy_window_end_minute};
+            int rep_h = (int)id(report_hour).state;
+            int rep_m = (int)id(report_minute).state;
+            int start_m = rep_h * 60 + rep_m;
+            if (start_m < end_m) start_m = 0;
+            if (start_m == 0) in_window = now_m < end_m;
+            else in_window = now_m >= start_m || now_m < end_m;
+          }
+          id(ha_status_sensor).publish_state(
+            !in_window && id(today_count) >= (int)id(break_threshold).state);
 
 esp32:
   board: esp32dev
@@ -100,7 +130,9 @@ time:
               }
               id(daily_counts)[0] = id(today_count);
               id(today_count) = 0;
-      # Per-minute poll: fires send_daily_report when local time matches report_hour:report_minute
+          # Midnight reset is deterministic — publish immediately, no jitter
+          - lambda: 'id(ha_status_sensor).publish_state(false);'
+      # Per-minute poll: fires send_daily_report and starts privacy window at report_time
       - seconds: 0
         minutes: /1
         then:
@@ -112,6 +144,15 @@ time:
                       && t.minute == (int)id(report_minute).state;
               then:
                 - script.execute: send_daily_report
+                - lambda: 'id(ha_status_sensor).publish_state(false);'
+      # Privacy window end: re-evaluate HA status without jitter (window-end is deterministic)
+      - seconds: 0
+        minutes: ${ha_privacy_window_end_minute}
+        hours: ${ha_privacy_window_end_hour}
+        then:
+          - lambda: >
+              id(ha_status_sensor).publish_state(
+                id(today_count) >= (int)id(break_threshold).state);
 
 globals:
   - id: today_count
@@ -136,6 +177,11 @@ globals:
     initial_value: '""'
 
 binary_sensor:
+  - platform: template
+    id: ha_status_sensor
+    name: "HA Status"
+    device_class: occupancy
+
   - platform: gpio
     pin:
       number: $beam_gpio_pin
@@ -158,11 +204,17 @@ binary_sensor:
             lambda: 'return !id(test_mode_active);'
           then:
             - lambda: 'id(today_count) += 1;'
+            - if:
+                condition:
+                  lambda: 'return id(today_count) == (int)id(break_threshold).state;'
+                then:
+                  - script.execute: publish_ha_status
 
 sensor:
   - platform: template
     name: "Today's Break Count"
     id: today_count_sensor
+    internal: true
     # web_server:
     #   sorting_group_id: group_status
     #   sorting_weight: 2
@@ -175,6 +227,7 @@ text_sensor:
   - platform: template
     name: "Daily History"
     id: daily_history_sensor
+    internal: true
     # web_server:
     #   sorting_group_id: group_status
     #   sorting_weight: 3
@@ -232,6 +285,7 @@ text:
   - platform: template
     id: webhook_url
     name: "Webhook URL"
+    internal: true
     # web_server:
     #   sorting_group_id: group_webhook
     #   sorting_weight: 1
@@ -248,7 +302,7 @@ number:
     # web_server:
     #   sorting_group_id: group_report
     #   sorting_weight: 1
-    min_value: 0
+    min_value: 1
     max_value: 100
     step: 1
     restore_value: true
@@ -334,6 +388,12 @@ switch:
       - script.stop: test_mode_revert_timer
 
 script:
+  - id: publish_ha_status
+    mode: single  # subsequent crossings during jitter window don't restart the timer
+    then:
+      - delay: !lambda 'return (900u + rand() % ${ha_jitter_max_add_s}) * 1000u;'
+      - lambda: *ha_status_publish_lambda
+
   - id: test_mode_revert_timer
     mode: restart  # re-enabling test mode resets the 30-minute clock
     then:

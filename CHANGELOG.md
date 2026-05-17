@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-05-17
+
+### Added
+
+#### Both routes
+
+- Home Assistant integration: both routes now expose a privacy-bounded binary
+  status sensor (`ok`/`not_ok`) indicating whether today's crossing count has
+  reached the configured threshold
+- A **privacy window** keeps the sensor at `not_ok` from the daily report time
+  (or midnight, whichever is earlier) until a configurable morning end time
+  (default 08:00), making nighttime activity structurally invisible in HA history
+- Within the daytime window, `not_ok`→`ok` transitions are delayed by a
+  randomized jitter of 15–60 minutes to prevent live dashboard inference of exact
+  crossing timing; the midnight reset and window-end re-evaluation are published
+  immediately (deterministic events)
+- Raw crossing count, 14-day history, and webhook URL are not exposed to HA
+
+#### ESP32 / ESPHome route
+
+- `ha_status_sensor` binary sensor exposed via the native API (auto-discovered
+  by Home Assistant)
+- `today_count_sensor`, `daily_history_sensor`, and `webhook_url` marked
+  `internal: true` to prevent raw data exposure
+- New `ha_jitter_max_add_s` substitution (default `2700`) controls the jitter
+  ceiling; intentionally compile-time only
+- New `ha_privacy_window_end_hour` / `ha_privacy_window_end_minute` substitutions
+  (default `8` / `0`) set the morning end of the privacy window; intentionally
+  compile-time only
+
+#### Raspberry Pi route
+
+- New `GET /home-assistant` endpoint in the web server returning
+  `{"state": "ok"}` or `{"state": "not_ok"}`
+- New `DETECTOR_HA_JITTER_MAX_ADD_S` env var (default `2700`) controls the
+  jitter ceiling
+- New `DETECTOR_HA_PRIVACY_WINDOW_END` env var (default `08:00`) sets the
+  morning end of the privacy window; set at deploy time via Ansible
+- New `DETECTOR_REPORT_TIME` env var (default `17:00`) sets the privacy window
+  start; must match the systemd timer schedule (`detector_report_time`)
+- `DETECTOR_REPORT_THRESHOLD` (already used by the daily reporter) now also
+  controls the HA status threshold
+
 ## [2.3.0] - 2026-05-16
 
 ### Added
@@ -140,4 +183,6 @@ ______________________________________________________________________
 [2.1.0]: https://github.com/remigius42/life-check/compare/v2.0.0...v2.1.0
 [2.2.0]: https://github.com/remigius42/life-check/compare/v2.1.0...v2.2.0
 [2.2.1]: https://github.com/remigius42/life-check/compare/v2.2.0...v2.2.1
-[unreleased]: https://github.com/remigius42/life-check/compare/v2.2.1...HEAD
+[2.3.0]: https://github.com/remigius42/life-check/compare/v2.2.1...v2.3.0
+[2.4.0]: https://github.com/remigius42/life-check/compare/v2.3.0...v2.4.0
+[unreleased]: https://github.com/remigius42/life-check/compare/v2.4.0...HEAD

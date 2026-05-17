@@ -191,3 +191,52 @@ The web UI also includes:
 - **Test Mode**: A switch to temporarily pause counting.
 - **Reset Today's Count**: A button to immediately clear the current daily crossing count.
 - **Report Hour / Report Minute**: Set the local time for the daily webhook report (default 17:00).
+
+## Home Assistant integration
+
+The firmware exposes an **HA Status** binary sensor to [Home
+Assistant](https://www.home-assistant.io) automatically via the ESPHome native
+API — no manual HA configuration is required beyond adding the device in the
+Home Assistant UI (Settings → Devices & Services → Add Integration → ESPHome).
+
+The sensor is **ON** when today's crossing count has reached or exceeded the
+configured threshold and the privacy window is not active. A typical HA automation
+checks this state at report time and alerts if it has not yet turned ON.
+
+### Privacy model
+
+The HA sensor operates within a **daytime window** only. Outside this window —
+from the configured report time each evening until `ha_privacy_window_end_hour:ha_privacy_window_end_minute`
+each morning (default 17:00–08:00, crossing midnight) — the sensor is always
+**OFF**, regardless of the crossing count. This is the **privacy window**.
+
+The privacy window means that nighttime activity is structurally invisible in HA
+history. Jitter alone cannot guarantee this: even a 60-minute smear leaves
+habitual patterns detectable over time. The window eliminates the signal rather
+than obscuring it, consistent with the project goal of a minimally invasive life
+check that cannot be used for habit deduction.
+
+Within the daytime window, the ON transition is delayed by a random jitter of
+**15–60 minutes** to prevent a live observer from inferring the exact crossing time.
+
+To maintain this privacy boundary:
+
+- The raw crossing count, 14-day history, and webhook URL are **not** exposed to
+  HA (`internal: true`). The message templates are also not exposed directly:
+  they may contain a `{count}` placeholder and would leak raw readings if a user
+  customizes them.
+- `ha_privacy_window_end_hour` and `ha_privacy_window_end_minute` (default `8`
+  and `0`) are **compile-time substitutions**, not runtime UI entities. Changing
+  the window end requires a firmware recompile — a HA-level actor cannot shrink
+  the window.
+- The jitter range (`ha_jitter_max_add_s`, default 2700 s) is a **compile-time
+  substitution**, not a runtime UI setting. Reducing it without understanding
+  the consequences can silently erode protection.
+
+### Sensor-failure assumption
+
+A device that is online and reporting **not_ok** (OFF) is assumed to mean the
+person has not yet crossed the threshold today — not that the sensor is broken.
+If the device itself goes offline, Home Assistant natively marks the entity as
+**unavailable**. Sensor hardware failure (beam sensor broken while device is
+online) is not a separately monitored failure mode.
