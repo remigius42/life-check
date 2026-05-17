@@ -117,6 +117,9 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: $timezone
+    on_time_sync:
+      then:
+        - lambda: *ha_status_publish_lambda
     on_time:
       # Midnight rollover: shift history FIFO, reset today's count
       # Index 0 = yesterday, index 13 = 14 days ago; oldest entry is dropped

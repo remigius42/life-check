@@ -387,6 +387,41 @@ class TestPrivacyWindow(unittest.TestCase):
             self.assertTrue(mod._in_privacy_window())
 
 
+class TestWatchHaStateRestart(unittest.TestCase):
+    """
+    _watch_ha_state must reflect real count at startup,
+    not assume last_crossed=False.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_ha_ok_set_immediately_when_already_above_threshold(self):
+        """
+        Restart while count >= threshold: _ha_ok True immediately,
+        no jitter timer.
+        """
+        setattr(self.mod, "_ha_ok", False)
+        setattr(self.mod, "_ha_timer", None)
+
+        above_threshold = self.mod._HA_THRESHOLD + 1
+
+        with patch.object(self.mod, "_read_counts", return_value=(above_threshold, [])):
+            with patch.object(self.mod, "time") as mock_time:
+                mock_time.sleep.side_effect = SystemExit
+                try:
+                    self.mod._watch_ha_state()
+                except SystemExit:
+                    pass
+
+        self.assertTrue(self.mod._ha_ok)
+        self.assertIsNone(self.mod._ha_timer)
+
+
 class TestWatcherThread(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

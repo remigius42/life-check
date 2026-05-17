@@ -106,7 +106,13 @@ def _watch_ha_state() -> None:
     Background thread: tracks threshold crossings and
     drives the jitter timer for _ha_ok.
     """
-    last_crossed = False
+    try:
+        count, _ = _read_counts()
+    except Exception:
+        count = 0
+    last_crossed = count >= _HA_THRESHOLD
+    if last_crossed:
+        _set_ha_ok(True)  # already crossed before restart — no jitter needed
     while True:
         try:
             count, _ = _read_counts()
