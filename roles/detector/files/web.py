@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MIT
+"""Flask web UI and Home Assistant endpoint for the beam-break detector."""
 
 # spellchecker: ignore dtime noopener noreferrer
 
@@ -56,6 +57,10 @@ _HA_JITTER_MAX_ADD_S = int(os.environ.get("DETECTOR_HA_JITTER_MAX_ADD_S", "2700"
 
 
 def _in_privacy_window() -> bool:
+    """
+    Return True during the nightly window [report_time, privacy_window_end) when
+    HA must report not_ok.
+    """
     now = datetime.now().time().replace(second=0, microsecond=0)
     start = _HA_REPORT_TIME
     end = _HA_PRIVACY_WINDOW_END
@@ -95,6 +100,10 @@ def _cancel_ha_timer() -> None:
 
 
 def _watch_ha_state() -> None:
+    """
+    Background thread: tracks threshold crossings and
+    drives the jitter timer for _ha_ok.
+    """
     last_crossed = False
     while True:
         try:
@@ -117,6 +126,10 @@ threading.Thread(target=_watch_ha_state, daemon=True, name="ha-watcher").start()
 
 
 def _read_state() -> dict:
+    """
+    Read state.json written by the detector daemon;
+    returns safe defaults on error.
+    """
     try:
         return json.loads(STATE_PATH.read_text())
     except OSError as exc:
@@ -144,6 +157,7 @@ def _read_counts() -> tuple[int, list[tuple[str, int]]]:
 
 
 def _sse_stream():
+    """Generator yielding SSE frames whenever state.json changes (polled at 50 ms)."""
     last = None
     while True:
         state = _read_state()
