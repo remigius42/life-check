@@ -10,6 +10,7 @@ words:
   - bantime
   - bcm
   - breakbeam
+  - coderabbit
   - commitlint
   - dataclass
   - deployers

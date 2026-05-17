@@ -33,6 +33,9 @@ reboot (today's count is preserved).*
 - Sends a daily webhook report with a configurable low-count alert
 - Exposes a responsive **"Life Check" web UI** with live status (SSE), 14-day
   history, test mode, and manual reset capability
+- Integrates with [Home Assistant](https://www.home-assistant.io) (both routes)
+  via a binary status sensor with a nightly privacy window and randomized jitter
+  on daytime state transitions
 
 ## Deployment routes
 

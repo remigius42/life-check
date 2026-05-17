@@ -1,13 +1,18 @@
 # SPDX-License-Identifier: MIT
+
+# spellchecker:ignore dtime
+
 import importlib
 import json
 import os
 import sys
 import tempfile
+import threading
 import unittest
-from datetime import date
+from datetime import date, datetime
+from datetime import time as dtime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 
 def _load_web(tmp_dir: Path):
@@ -208,6 +213,287 @@ class TestIndexAndStream(unittest.TestCase):
     def test_stream_returns_event_stream_content_type(self):
         resp = self.client.get("/stream")
         self.assertIn("text/event-stream", resp.content_type)
+
+
+class TestHaTimerCancellation(unittest.TestCase):
+    """Jitter timer cancelled when count drops below threshold (midnight reset)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_cancel_ha_timer_cancels_and_clears(self):
+        mock_timer = MagicMock()
+        setattr(self.mod, "_ha_timer", mock_timer)
+        self.mod._cancel_ha_timer()
+        mock_timer.cancel.assert_called_once()
+        self.assertIsNone(self.mod._ha_timer)
+
+    def test_cancel_ha_timer_noop_when_no_timer(self):
+        setattr(self.mod, "_ha_timer", None)
+        self.mod._cancel_ha_timer()  # must not raise
+        self.assertIsNone(self.mod._ha_timer)
+
+    def test_pending_timer_cancelled_on_threshold_drop(self):
+        """On threshold drop, pending timer is cancelled before state is cleared."""
+        mock_timer = MagicMock()
+        mock_timer.is_alive.return_value = True
+        setattr(self.mod, "_ha_timer", mock_timer)
+        setattr(self.mod, "_ha_ok", True)
+
+        self.mod._cancel_ha_timer()
+        self.mod._set_ha_ok(False)
+
+        mock_timer.cancel.assert_called_once()
+        self.assertIsNone(self.mod._ha_timer)
+        self.assertFalse(self.mod._ha_ok)
+
+
+class TestHomeAssistantEndpoint(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+        self.client = self.mod.app.test_client()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_returns_200(self):
+        resp = self.client.get("/home-assistant")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_returns_not_ok_by_default(self):
+        setattr(self.mod, "_ha_ok", False)
+        resp = self.client.get("/home-assistant")
+        self.assertEqual(resp.get_json(), {"state": "not_ok"})
+
+    def test_returns_ok_when_ha_ok_true(self):
+        setattr(self.mod, "_ha_ok", True)
+        with patch.object(self.mod, "_in_privacy_window", return_value=False):
+            resp = self.client.get("/home-assistant")
+        self.assertEqual(resp.get_json(), {"state": "ok"})
+
+
+class TestMaybeStartJitterTimer(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_starts_timer_when_none_exists(self):
+        setattr(self.mod, "_ha_timer", None)
+        with patch("threading.Timer") as mock_timer_cls:
+            mock_instance = MagicMock()
+            mock_timer_cls.return_value = mock_instance
+            self.mod._maybe_start_jitter_timer()
+        mock_timer_cls.assert_called_once()
+        mock_instance.start.assert_called_once()
+
+    def test_does_not_start_new_timer_when_one_is_alive(self):
+        mock_timer = MagicMock()
+        mock_timer.is_alive.return_value = True
+        setattr(self.mod, "_ha_timer", mock_timer)
+        with patch("threading.Timer") as mock_timer_cls:
+            self.mod._maybe_start_jitter_timer()
+        mock_timer_cls.assert_not_called()
+
+    def test_starts_new_timer_when_existing_timer_dead(self):
+        mock_timer = MagicMock()
+        mock_timer.is_alive.return_value = False
+        setattr(self.mod, "_ha_timer", mock_timer)
+        with patch("threading.Timer") as mock_timer_cls:
+            mock_instance = MagicMock()
+            mock_timer_cls.return_value = mock_instance
+            self.mod._maybe_start_jitter_timer()
+        mock_timer_cls.assert_called_once()
+        mock_instance.start.assert_called_once()
+
+
+class TestPrivacyWindow(unittest.TestCase):
+    """Unit tests for _in_privacy_window() with controlled clock and env vars."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _load_with_times(self, report_time: str, window_end: str):
+        env = {
+            "DETECTOR_REPORT_TIME": report_time,
+            "DETECTOR_HA_PRIVACY_WINDOW_END": window_end,
+        }
+        with patch.dict(os.environ, env):
+            mod, *_ = _load_web(Path(self.tmp.name))
+        return mod
+
+    def _check(self, mod, now: dtime) -> bool:
+        with patch("web.datetime") as mock_dt:
+            mock_dt.now.return_value = datetime(
+                2026, 1, 1, now.hour, now.minute, now.second
+            )
+            return mod._in_privacy_window()
+
+    def test_in_window_evening(self):
+        mod = self._load_with_times("17:00", "08:00")
+        self.assertTrue(self._check(mod, dtime(20, 0)))
+
+    def test_in_window_after_midnight(self):
+        mod = self._load_with_times("17:00", "08:00")
+        self.assertTrue(self._check(mod, dtime(3, 30)))
+
+    def test_in_window_at_start_boundary(self):
+        mod = self._load_with_times("17:00", "08:00")
+        self.assertTrue(self._check(mod, dtime(17, 0)))
+
+    def test_out_of_window_daytime(self):
+        mod = self._load_with_times("17:00", "08:00")
+        self.assertFalse(self._check(mod, dtime(12, 0)))
+
+    def test_out_of_window_at_end_boundary(self):
+        # 08:00 is the first minute outside the window
+        mod = self._load_with_times("17:00", "08:00")
+        self.assertFalse(self._check(mod, dtime(8, 0)))
+
+    def test_out_of_window_just_before_start(self):
+        mod = self._load_with_times("17:00", "08:00")
+        self.assertFalse(self._check(mod, dtime(16, 59)))
+
+    def test_midnight_cap_report_time_in_morning(self):
+        # report_time=02:00 < window_end=08:00 → effective_start capped to 00:00
+        mod = self._load_with_times("02:00", "08:00")
+        self.assertTrue(self._check(mod, dtime(1, 0)))  # in window (before end)
+        self.assertFalse(self._check(mod, dtime(10, 0)))  # out of window (after end)
+
+    def test_midnight_cap_boundary_at_window_end(self):
+        mod = self._load_with_times("01:00", "08:00")
+        self.assertFalse(self._check(mod, dtime(8, 0)))  # end boundary is exclusive
+
+    def test_report_time_equals_window_end_daytime_not_in_window(self):
+        # report_time == window_end (degenerate config) must not make sensor always off
+        mod = self._load_with_times("08:00", "08:00")
+        self.assertFalse(self._check(mod, dtime(12, 0)))
+
+    def test_in_window_at_start_boundary_with_nonzero_seconds(self):
+        # now=17:00:30 strips to 17:00:00 which equals start — still in window
+        mod = self._load_with_times("17:00", "08:00")
+        with patch("web.datetime") as mock_dt:
+            mock_dt.now.return_value = datetime(2026, 1, 1, 17, 0, 30)
+            self.assertTrue(mod._in_privacy_window())
+
+
+class TestWatchHaStateRestart(unittest.TestCase):
+    """
+    _watch_ha_state must reflect real count at startup,
+    not assume last_crossed=False.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.mod, *_ = _load_web(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_ha_ok_set_immediately_when_already_above_threshold(self):
+        """
+        Restart while count >= threshold: _ha_ok True immediately,
+        no jitter timer.
+        """
+        setattr(self.mod, "_ha_ok", False)
+        setattr(self.mod, "_ha_timer", None)
+
+        above_threshold = self.mod._HA_THRESHOLD + 1
+
+        with patch.object(self.mod, "_read_counts", return_value=(above_threshold, [])):
+            with patch.object(self.mod, "time") as mock_time:
+                mock_time.sleep.side_effect = SystemExit
+                try:
+                    self.mod._watch_ha_state()
+                except SystemExit:
+                    pass
+
+        self.assertTrue(self.mod._ha_ok)
+        self.assertIsNone(self.mod._ha_timer)
+
+
+class TestWatcherThread(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_only_one_watcher_thread_after_multiple_reloads(self):
+        _load_web(Path(self.tmp.name))
+        _load_web(Path(self.tmp.name))
+        ha_watchers = [t for t in threading.enumerate() if t.name == "ha-watcher"]
+        self.assertEqual(len(ha_watchers), 1)
+
+
+class TestJitterConfig(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_negative_jitter_env_var_clamped_to_zero(self):
+        env = {"DETECTOR_HA_JITTER_MAX_ADD_S": "-1800"}
+        with patch.dict(os.environ, env):
+            mod, *_ = _load_web(Path(self.tmp.name))
+        self.assertGreaterEqual(mod._HA_JITTER_MAX_ADD_S, 0)
+
+
+class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
+    """Privacy window suppresses 'ok' state at the endpoint level."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _load_with_times(self, report_time: str, window_end: str):
+        env = {
+            "DETECTOR_REPORT_TIME": report_time,
+            "DETECTOR_HA_PRIVACY_WINDOW_END": window_end,
+        }
+        with patch.dict(os.environ, env):
+            mod, *_ = _load_web(Path(self.tmp.name))
+        return mod
+
+    def test_returns_not_ok_in_window_even_when_ha_ok_true(self):
+        mod = self._load_with_times("17:00", "08:00")
+        setattr(mod, "_ha_ok", True)
+        client = mod.app.test_client()
+        with patch("web.datetime") as mock_dt:
+            mock_dt.now.return_value = datetime(2026, 1, 1, 20, 0, 0)
+            resp = client.get("/home-assistant")
+        self.assertEqual(resp.get_json(), {"state": "not_ok"})
+
+    def test_returns_ok_outside_window_when_ha_ok_true(self):
+        mod = self._load_with_times("17:00", "08:00")
+        setattr(mod, "_ha_ok", True)
+        client = mod.app.test_client()
+        with patch("web.datetime") as mock_dt:
+            mock_dt.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
+            resp = client.get("/home-assistant")
+        self.assertEqual(resp.get_json(), {"state": "ok"})
+
+    def test_returns_not_ok_outside_window_when_ha_ok_false(self):
+        mod = self._load_with_times("17:00", "08:00")
+        setattr(mod, "_ha_ok", False)
+        client = mod.app.test_client()
+        with patch("web.datetime") as mock_dt:
+            mock_dt.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
+            resp = client.get("/home-assistant")
+        self.assertEqual(resp.get_json(), {"state": "not_ok"})
 
 
 if __name__ == "__main__":
