@@ -26,6 +26,11 @@ jobs:
       - name: Install Python deps
         run: pip install -r requirements-dev.txt
 
+      - name: Create dummy ESPHome secrets
+        run: |
+          cp esphome/secrets.yaml.example esphome/secrets.yaml
+          sed -i 's|generate-with-openssl-rand-base64-32|AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=|' esphome/secrets.yaml
+
       - name: Create dummy vault password file
         run: echo 'ci' > .vault_pass
 
