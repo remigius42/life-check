@@ -30,7 +30,7 @@ Python files are formatted with **Black** and linted with **Ruff**; type-checked
 - Scripts are deployed verbatim (not as Jinja2 templates) so they can be imported and tested without Ansible
 - `RPi.GPIO` is hardware-only; `reportMissingModuleSource` is suppressed in the Pyright config
 - Dev dependencies (e.g. `flask`, `waitress`) are in `requirements-dev.txt`
-  run tests via `.venv/bin/python3` — the system Python lacks these packages
+  run tests via `.venv/bin/python3 -m unittest` — **no pytest**, use unittest only
 - Black/Ruff/Pyright do **not** apply to ESPHome YAML files
 
 ## ESPHome firmware
