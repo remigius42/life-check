@@ -64,9 +64,11 @@ threading.Thread(target=_watch_ha_state, daemon=True).start()
 ```python
 @app.get("/home-assistant")
 def home_assistant():
+    if _in_privacy_window():
+        return {"state": "not_ok"}
     with _ha_lock:
-        state = "ok" if _ha_ok else "not_ok"
-    return {"state": state}
+        ok = _ha_ok
+    return {"state": "ok" if ok else "not_ok"}
 ```
 
 ## Notes

@@ -48,14 +48,14 @@ esphome:
     then:
       - lambda: &ha_status_publish_lambda |-
           auto t = id(sntp_time).now();
-          bool in_window = false;
+          bool in_window = true;  // fail-closed: assume window active until SNTP confirms otherwise
           if (t.is_valid()) {
             int now_m = t.hour * 60 + t.minute;
             int end_m = ${ha_privacy_window_end_hour} * 60 + ${ha_privacy_window_end_minute};
             int rep_h = (int)id(report_hour).state;
             int rep_m = (int)id(report_minute).state;
             int start_m = rep_h * 60 + rep_m;
-            if (start_m < end_m) start_m = 0;
+            if (start_m <= end_m) start_m = 0;
             if (start_m == 0) in_window = now_m < end_m;
             else in_window = now_m >= start_m || now_m < end_m;
           }

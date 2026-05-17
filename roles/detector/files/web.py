@@ -52,14 +52,16 @@ _HA_PRIVACY_WINDOW_END = _parse_hhmm(
 # Jitter: [15, 60) min on daytime threshold-crossing transitions only.
 # Intentionally not a runtime-configurable setting — reducing this without
 # understanding the privacy model can silently erode protection.
-_HA_JITTER_MAX_ADD_S = int(os.environ.get("DETECTOR_HA_JITTER_MAX_ADD_S", "2700"))
+_HA_JITTER_MAX_ADD_S = max(
+    0, int(os.environ.get("DETECTOR_HA_JITTER_MAX_ADD_S", "2700"))
+)
 
 
 def _in_privacy_window() -> bool:
     now = datetime.now().time().replace(second=0, microsecond=0)
     start = _HA_REPORT_TIME
     end = _HA_PRIVACY_WINDOW_END
-    if start < end:  # midnight cap: report_time misconfigured into morning hours
+    if start <= end:  # midnight cap: report_time misconfigured into morning hours
         start = dtime(0, 0)
     if start == dtime(0, 0):
         return now < end
@@ -113,7 +115,8 @@ def _watch_ha_state() -> None:
 
 app = Flask(__name__, static_folder=STATIC_DIR)
 
-threading.Thread(target=_watch_ha_state, daemon=True, name="ha-watcher").start()
+if not any(t.name == "ha-watcher" for t in threading.enumerate()):
+    threading.Thread(target=_watch_ha_state, daemon=True, name="ha-watcher").start()
 
 
 def _read_state() -> dict:

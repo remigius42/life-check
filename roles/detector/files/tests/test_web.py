@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import unittest
 from datetime import date, datetime
 from datetime import time as dtime
@@ -373,12 +374,45 @@ class TestPrivacyWindow(unittest.TestCase):
         mod = self._load_with_times("01:00", "08:00")
         self.assertFalse(self._check(mod, dtime(8, 0)))  # end boundary is exclusive
 
+    def test_report_time_equals_window_end_daytime_not_in_window(self):
+        # report_time == window_end (degenerate config) must not make sensor always off
+        mod = self._load_with_times("08:00", "08:00")
+        self.assertFalse(self._check(mod, dtime(12, 0)))
+
     def test_in_window_at_start_boundary_with_nonzero_seconds(self):
         # now=17:00:30 strips to 17:00:00 which equals start — still in window
         mod = self._load_with_times("17:00", "08:00")
         with patch("web.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 1, 1, 17, 0, 30)
             self.assertTrue(mod._in_privacy_window())
+
+
+class TestWatcherThread(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_only_one_watcher_thread_after_multiple_reloads(self):
+        _load_web(Path(self.tmp.name))
+        _load_web(Path(self.tmp.name))
+        ha_watchers = [t for t in threading.enumerate() if t.name == "ha-watcher"]
+        self.assertEqual(len(ha_watchers), 1)
+
+
+class TestJitterConfig(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_negative_jitter_env_var_clamped_to_zero(self):
+        env = {"DETECTOR_HA_JITTER_MAX_ADD_S": "-1800"}
+        with patch.dict(os.environ, env):
+            mod, *_ = _load_web(Path(self.tmp.name))
+        self.assertGreaterEqual(mod._HA_JITTER_MAX_ADD_S, 0)
 
 
 class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
