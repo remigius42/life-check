@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
+"""
+Daily beam-break report script — reads counts.json and
+POSTs a summary to a webhook.
+"""
+
 import datetime
 import json
 import logging
@@ -66,6 +71,9 @@ def main():
 
 
 def _read_count(counts_path):
+    """
+    Return today's break count from counts.json, or None to skip reporting.
+    """
     today = datetime.date.today().isoformat()
     try:
         with open(counts_path) as f:
@@ -99,6 +107,10 @@ def _read_count(counts_path):
 
 
 def _post(url, message):
+    """
+    POST a JSON ``{"text": message}`` payload to url;
+    exits non-zero on failure.
+    """
     body = json.dumps({"text": message}).encode()
     req = urllib.request.Request(
         url,
