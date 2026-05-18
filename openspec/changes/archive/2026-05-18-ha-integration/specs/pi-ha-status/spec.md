@@ -20,9 +20,12 @@ upper bound exclusive), after which it returns `ok`. The midnight reset SHALL NO
 jittered. The watcher thread continues managing `_ha_ok` during the privacy window;
 the endpoint applies the window check live at request time.
 
-`DETECTOR_REPORT_TIME` (default `"17:00"`, parsed as `HH:MM`) is the privacy window
-start. It is also used by the systemd timer — both MUST be set to the same value
-via the Ansible role.
+`DETECTOR_REPORT_TIME` (default `"17:00"`, parsed as `HH:MM`) is the configured
+report time used by the systemd timer. The true privacy-window start is
+`effective_start`: equal to `DETECTOR_REPORT_TIME` when that time is ≥ the
+window-end time, otherwise capped to `00:00` (midnight). The Ansible role MUST
+set `DETECTOR_REPORT_TIME` and the systemd timer to the same value; `effective_start`
+determines the actual window start.
 
 A background daemon thread SHALL watch `state.json` for threshold crossings and
 manage jitter via `threading.Timer`. A `threading.Lock` SHALL guard the shared

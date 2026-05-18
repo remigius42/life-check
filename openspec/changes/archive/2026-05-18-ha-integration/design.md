@@ -67,10 +67,14 @@ The window spans `effective_start` → `morning_end` (crosses midnight):
   var (`DETECTOR_HA_PRIVACY_WINDOW_END`) on Pi; both require device-level access to
   change.
 
-At window-start (`report_time`) the sensor is forced to `not_ok`. At window-end
-(`morning_end`) the sensor re-evaluates without jitter — the window-end transition is
-deterministic and reveals no behavioral timing information. The midnight count reset
-is NOT jittered for the same reason.
+At `effective_start` the sensor is forced to `not_ok`. In the normal case
+(`report_time ≥ morning_end`) this is `report_time`; in the misconfigured case
+(`report_time < morning_end`) `effective_start` is `00:00` and the sensor goes OFF
+at midnight via the privacy window lambda (the count reset also naturally drops the
+sensor to OFF). The daily report is always sent at `report_time` regardless. At
+window-end (`morning_end`) the sensor re-evaluates without jitter — the window-end
+transition is deterministic and reveals no behavioral timing information. The midnight
+count reset is NOT jittered for the same reason.
 
 **Jitter: `15min + rand() % 45min` on daytime threshold-crossing transitions only**
 Within the daytime window (`morning_end` to `report_time`), when the count first
@@ -149,6 +153,8 @@ hides them only from HA while keeping them locally accessible.
 
 ## Migration Plan
 
-No existing HA installations expected. ESPHome users will lose
-`today_count_sensor` and `daily_history_sensor` on firmware update — acceptable
-given this is a new integration being introduced for the first time.
+No existing HA installations expected. ESPHome users will find
+`today_count_sensor` and `daily_history_sensor` hidden from HA after a firmware
+update (the sensors continue to exist locally on the ESPHome device but are no
+longer exposed to HA) — acceptable given this is a new integration being
+introduced for the first time.

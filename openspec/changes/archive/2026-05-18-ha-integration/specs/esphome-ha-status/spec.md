@@ -24,7 +24,7 @@ Assistant that reflects activity state; all raw-data entities SHALL be marked
 **Privacy window:** The sensor SHALL return OFF whenever the current local time falls
 within the privacy window: from `effective_start` until `ha_privacy_window_end_hour:ha_privacy_window_end_minute` (crosses midnight). `effective_start` is `report_hour:report_minute` if that time is ≥ the window end time; otherwise it is `00:00` (midnight cap). The morning end time SHALL be exposed as substitutions (`ha_privacy_window_end_hour`, default `"8"`; `ha_privacy_window_end_minute`, default `"0"`) and SHALL NOT be a runtime-configurable UI entity — changing it requires a firmware recompile.
 
-At window-start (`report_time`) the sensor is forced OFF. At window-end the sensor
+At window-start (`effective_start`) the sensor is forced OFF. At window-end the sensor
 re-evaluates and publishes based on `today_count` without jitter (window-end is
 deterministic).
 
@@ -57,9 +57,9 @@ and SHALL NOT be a runtime-configurable UI entity.
 - **WHEN** local time is within the privacy window (effective_start to morning_end)
 - **THEN** `ha_status_sensor` is OFF regardless of `today_count`
 
-#### Scenario: Window-start (report_time)
-- **WHEN** local time reaches `report_hour:report_minute`
-- **THEN** `ha_status_sensor` is forced OFF (privacy window begins); the daily report is sent concurrently
+#### Scenario: Window-start (effective_start)
+- **WHEN** local time reaches `effective_start` (`report_hour:report_minute` when `report_time ≥ morning_end`; `00:00` otherwise)
+- **THEN** `ha_status_sensor` is forced OFF (privacy window begins); the daily report is sent at `report_time` regardless
 
 #### Scenario: Window-end (morning_end)
 - **WHEN** local time reaches `ha_privacy_window_end_hour:ha_privacy_window_end_minute`
