@@ -1,0 +1,11 @@
+reviews:
+  path_instructions:
+    - path: "openspec/**"
+      instructions: >
+        Do not raise markdownlint violations for any file under this path.
+    - path: "openspec/**/notes/*.md"
+      instructions: >
+        Files under notes/ are implementation hint documents containing illustrative code
+        fragments intended to guide implementation. They are not expected to be fully functional
+        or production-ready. Do not flag missing imports, incomplete snippets, missing error
+        handling, or other "not runnable as written" issues.
