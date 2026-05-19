@@ -38,6 +38,16 @@ Python files are formatted with **Black** and linted with **Ruff**; type-checked
 The `esphome/` tree is compiled with `.venv/bin/esphome compile esphome/life-check.yaml`.
 Optional TTGO OLED package: uncomment the `packages:` block in `life-check.yaml` (see `docs/esp32.md`).
 
+## OpenSpec
+
+When syncing delta specs to `openspec/specs/` (eg. via `/opsx:sync` or
+`/opsx:archive`), never copy delta spec files verbatim. Always rewrite:
+
+- Add `## Purpose` as the first section if missing (derive from the change proposal/design)
+- Use `## Requirements` — never `## ADDED Requirements` or any other delta marker
+
+Delta specs are diff-format; main specs are canonical. The pre-commit hook validates this.
+
 ## Release
 
 - Sync `esphome.project.version` in `esphome/life-check.yaml` with the new version
