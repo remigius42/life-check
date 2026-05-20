@@ -121,12 +121,18 @@ Configuration is split across two files:
 - **`esphome/secrets.yaml`** — credentials only: WiFi SSID/password, OTA password,
   web UI credentials, webhook URL, and API encryption key. These must be set before
   flashing.
+
 - **`substitutions:` block in `esphome/life-check.yaml`** — non-secret compile-time
   config: `beam_gpio_pin` (default GPIO 13) and `timezone` (default `Europe/Zurich`).
   These two values are compile-time only and cannot be changed via the web UI after
   flashing: `beam_gpio_pin` is physically wired at assembly, and `timezone` uses an
   opaque POSIX string format (e.g., `CET-1CEST,M3.5.0,M10.5.0/3`) that is error-prone
   to edit at runtime.
+
+  To deploy multiple units, also set a unique `esphome.name` in each copy of the
+  YAML — this is the mDNS hostname (e.g. `life-check.local`). If you rename an
+  already-flashed device, OTA discovery will fail until you add
+  `wifi: {use_address: old-name.local}` to bridge the transition.
 
 Everything else — threshold, retry count, message templates, and report time — has
 sensible defaults and can be configured via the web UI after first flash without
