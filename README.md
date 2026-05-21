@@ -67,6 +67,8 @@ The license notice is preserved in `roles/detector/files/static/pico-*.min.css`.
 
 See [CHANGELOG.md](CHANGELOG.md) for a history of notable changes.
 
+See [docs/backlog.md](docs/backlog.md) for parked ideas and future work.
+
 ## Development
 
 See [docs/development.md](docs/development.md) for local setup, running tests, linting,

@@ -6,6 +6,9 @@
 # spellchecker: ignore pytype ropeproject sdist spyderproject
 # spellchecker: ignore spyproject timemachine venv webassets
 
+# Personal scratchpad — gitignored to reduce noise; see docs/backlog.md for tracked future work
+/TODO.md
+
 # Ansible cache and log files
 .ansible/
 
