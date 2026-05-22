@@ -14,5 +14,6 @@ MD033:  # Inline HTML
   allowed_elements:
     - details
     - summary
+    - br
 
 MD041: false  # First line in file should be a top level heading - disable for flexibility
