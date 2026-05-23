@@ -288,6 +288,8 @@ To maintain this privacy boundary:
   setting. Reducing it without understanding the consequences can silently erode
   protection.
 
+See [docs/security.md](security.md) for the full privacy and security model.
+
 ### Sensor-failure assumption
 
 A Pi that is online and returning `not_ok` is assumed to mean the person has not

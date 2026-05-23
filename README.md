@@ -78,6 +78,9 @@ See [docs/notifications.md](docs/notifications.md) for webhook setup (Slack, ema
 
 ## Security
 
+See [docs/security.md](docs/security.md) for the security and privacy model, threat model,
+and rationale behind design decisions.
+
 Please report vulnerabilities privately — see [SECURITY.md](.github/SECURITY.md).
 
 ## Contributing

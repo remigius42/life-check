@@ -232,10 +232,11 @@ Within the daytime window, the ON transition is delayed by a random jitter of
 
 To maintain this privacy boundary:
 
-- The raw crossing count, 14-day history, and webhook URL are **not** exposed to
-  HA (`internal: true`). The message templates are also not exposed directly:
-  they may contain a `{count}` placeholder and would leak raw readings if a user
-  customizes them.
+- The raw crossing count and 14-day history are **not** exposed to HA. The
+  webhook URL is marked `internal: true` and is invisible to HA. Message
+  templates are visible to HA as editable text entities, but they contain only
+  the template string — the `{count}` substitution happens at report time and
+  the resolved count is never sent to HA.
 - `ha_privacy_window_end_hour` and `ha_privacy_window_end_minute` (default `8`
   and `0`) are **compile-time substitutions**, not runtime UI entities. Changing
   the window end requires a firmware recompile — a HA-level actor cannot shrink
@@ -243,6 +244,8 @@ To maintain this privacy boundary:
 - The jitter range (`ha_jitter_max_add_s`, default 2700 s) is a **compile-time
   substitution**, not a runtime UI setting. Reducing it without understanding
   the consequences can silently erode protection.
+
+See [docs/security.md](security.md) for the full privacy and security model.
 
 ### Sensor-failure assumption
 
