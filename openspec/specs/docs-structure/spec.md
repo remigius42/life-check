@@ -1,4 +1,7 @@
+<!-- markdownlint-disable MD013 -->
+
 ## Purpose
+
 Define the documentation structure: which files live where and what each contains.
 
 ## Requirements

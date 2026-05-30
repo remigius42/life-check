@@ -1,4 +1,7 @@
+<!-- markdownlint-disable MD013 -->
+
 ## Purpose
+
 Define the GitHub Actions CI workflow: triggers, pre-commit execution, and setup steps required for `language: system` hooks.
 
 ## Requirements
@@ -31,8 +34,7 @@ PRs opened from forks (where the head repo differs from the base repo).
 ### Requirement: openspec-validate hook runs in CI
 
 The workflow SHALL set a pinned Node.js major version via `actions/setup-node`
-before installing the latest `openspec` CLI globally via npm, so the `language:
-system` `openspec-validate` hook can resolve the binary under a known runtime.
+before installing the latest `openspec` CLI globally via npm, so the `language: system` `openspec-validate` hook can resolve the binary under a known runtime.
 
 #### Scenario: openspec binary available during pre-commit
 

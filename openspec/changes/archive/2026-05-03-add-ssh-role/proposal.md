@@ -1,11 +1,14 @@
 ## Why
 
-The `life_man_switch` Pi needs SSH hardened (no root login, pubkey-only where possible). The control node may not always have an SSH key available (e.g. a Windows machine accessed via TeamViewer), so the key-deploy + password-auth-disable flow must be optional rather than mandatory.
+The `life_man_switch` Pi needs SSH hardened (no root login, pubkey-only where possible). The control node may not always
+have an SSH key available (e.g. a Windows machine accessed via TeamViewer), so the key-deploy + password-auth-disable
+flow must be optional rather than mandatory.
 
 ## What Changes
 
 - New `roles/ssh/` Ansible role with `ssh_manage_keys` flag
-- When `ssh_manage_keys: false`: skips pre-check, key deployment, and `PasswordAuthentication no` — still enforces `PermitRootLogin no` and `PubkeyAuthentication yes`
+- When `ssh_manage_keys: false`: skips pre-check, key deployment, and `PasswordAuthentication no` — still enforces
+  `PermitRootLogin no` and `PubkeyAuthentication yes`
 - `group_vars/all/vars.yml`: add `ssh_manage_keys: false`
 - `playbooks/site.yml`: add `ssh` role
 - `playbooks/verify.yml`: add sshd_config and service assertions (conditional on `ssh_manage_keys`)

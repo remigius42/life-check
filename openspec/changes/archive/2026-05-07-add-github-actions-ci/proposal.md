@@ -1,7 +1,7 @@
 ## Why
 
-The repo has no automated checks; errors only surface locally via pre-commit. A CI
-workflow catches issues on every push and PR before they reach `main`.
+The repo has no automated checks; errors only surface locally via pre-commit. A CI workflow catches issues on every push
+and PR before they reach `main`.
 
 ## What Changes
 

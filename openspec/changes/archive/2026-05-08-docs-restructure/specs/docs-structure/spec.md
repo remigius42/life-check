@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 ## ADDED Requirements
 
 ### Requirement: docs/ directory houses route guides and supplementary documentation

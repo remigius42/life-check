@@ -10,6 +10,7 @@
 
 ## 2. Documentation
 
-- [x] 2.1 Add CI section to `DEVELOPMENT.md` covering triggers, openspec install rationale, Python deps install rationale, and fork-filtering behavior
+- [x] 2.1 Add CI section to `DEVELOPMENT.md` covering triggers, openspec install rationale, Python deps install
+  rationale, and fork-filtering behavior
 - [x] 2.2 Add note to `DEVELOPMENT.md` that any new `language: system` hook requires a corresponding CI setup step
 - [x] 2.3 Add GitHub Actions CI status badge to `README.md` below the existing badges

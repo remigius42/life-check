@@ -91,7 +91,8 @@ Task order: unconditional hardening runs first so those settings apply even if t
 
 ## Collections requirement
 
-`ansible.posix` is required for `ansible.posix.authorized_key`. Verify it is listed in `collections/requirements.yml`. If not, add:
+`ansible.posix` is required for `ansible.posix.authorized_key`. Verify it is listed in `collections/requirements.yml`.
+If not, add:
 
 ```yaml
 - name: ansible.posix
@@ -102,5 +103,6 @@ Task order: unconditional hardening runs first so those settings apply even if t
 - `become: true` on each task that touches system files (not at play level)
 - All variables prefixed with role name (`ssh_`)
 - Remove unused role directories (`templates/`, `vars/`, `tests/`)
-- `meta/main.yml` structure: author `Andreas Remigius Schmidt`, company `binary poetry gmbh`, license `MIT`, `min_ansible_version: "2.14"`
+- `meta/main.yml` structure: author `Andreas Remigius Schmidt`, company `binary poetry gmbh`, license `MIT`,
+  `min_ansible_version: "2.14"`
 - `# SPDX-License-Identifier: MIT` header on every YAML file

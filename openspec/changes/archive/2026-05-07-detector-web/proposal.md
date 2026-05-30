@@ -1,11 +1,13 @@
 ## Why
 
-The beam-break detector currently has no live visibility — checking counts or beam state requires SSH. A minimal web UI on the LAN gives at-a-glance status and lets users toggle test mode without touching a terminal.
+The beam-break detector currently has no live visibility — checking counts or beam state requires SSH. A minimal web UI
+on the LAN gives at-a-glance status and lets users toggle test mode without touching a terminal.
 
 ## What Changes
 
 - New Flask web server (`web.py`) serving a single-page status UI
-- Status page shows: today's break count, current beam state (broken/clear), test mode indicator, and a toggle button to enter/exit test mode
+- Status page shows: today's break count, current beam state (broken/clear), test mode indicator, and a toggle button to
+  enter/exit test mode
 - Test mode toggle writes or deletes the sentinel file `/run/beam_detector/test_mode`
 - New systemd service `beam-detector-web.service` running the Flask app
 - UFW rule opening the configured port (default 8080) for LAN subnet only
@@ -20,7 +22,8 @@ The beam-break detector currently has no live visibility — checking counts or 
 
 ### Modified Capabilities
 
-- `detector-ansible-role`: Extended with web server script deployment, systemd service, UFW rule, and web-related variables
+- `detector-ansible-role`: Extended with web server script deployment, systemd service, UFW rule, and web-related
+  variables
 
 ## Impact
 

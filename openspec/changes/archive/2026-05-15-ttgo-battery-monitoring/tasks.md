@@ -18,9 +18,8 @@
 
 ## 4. Documentation
 
-- [x] 4.1 Add warning to `docs/esp32.md` TTGO section: do not reduce
-  `beam_debounce` below 250 ms on battery — WiFi TX supply sag causes false
-  counts
+- [x] 4.1 Add warning to `docs/esp32.md` TTGO section: do not reduce `beam_debounce` below 250 ms on battery — WiFi TX
+  supply sag causes false counts
 
 ## 5. Release
 
