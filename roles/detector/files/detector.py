@@ -29,8 +29,11 @@ class GpioPort(Protocol):
 
 
 class RpiGpioPort:
-    """Production GPIO pin backed by RPi.GPIO (imported lazily so the module
-    loads on non-Pi machines for testing)."""
+    """
+    Production GPIO pin backed by RPi.GPIO.
+
+    Imported lazily so the module loads on non-Pi machines for testing.
+    """
 
     def __init__(
         self,
@@ -39,6 +42,7 @@ class RpiGpioPort:
         _sleep_fn: Callable[[float], None] | None = None,
         _gpio_module: Any = None,
     ) -> None:
+        """Initialise pin, retry count, and optional injectable dependencies."""
         gpio: Any = _gpio_module
         if gpio is None:
             import RPi.GPIO as _rpi_gpio  # lazy — not available on dev machine
@@ -74,11 +78,13 @@ class RpiGpioPort:
 
 @dataclass
 class Config:
-    """Runtime configuration.
+    """
+    Runtime configuration.
 
     Defaults must stay in sync with
     roles/detector/defaults/main.yml — the script is deployed verbatim (not as
-    a Jinja2 template) so it can be imported and tested without Ansible."""
+    a Jinja2 template) so it can be imported and tested without Ansible.
+    """
 
     gpio_pin: int = 17
     poll_interval_ms: int = 50
@@ -119,10 +125,14 @@ class Config:
 
 
 class BeamDetector:
-    """Polling loop that detects rising edges on a GPIO pin, maintains a daily
-    break counter, and persists history to counts.json."""
+    """
+    Polling loop that detects rising edges on a GPIO pin.
+
+    Maintains a daily break counter and persists history to counts.json.
+    """
 
     def __init__(self, config: Config, gpio_port: GpioPort) -> None:
+        """Initialise with runtime config and GPIO port."""
         self._cfg = config
         self._gpio = gpio_port
         self._today_count: int = 0
@@ -193,8 +203,11 @@ class BeamDetector:
             self._test_mode_entered_at = None
 
     def _maybe_reset_count(self) -> bool:
-        """Check for reset sentinel and reset today's count.
-        Returns True if a reset was performed in this iteration."""
+        """
+        Check for reset sentinel and reset today's count.
+
+        Returns True if a reset was performed in this iteration.
+        """
         if self._cfg.reset_count_sentinel.exists():
             if self._today_count != 0:
                 self._today_count = 0
