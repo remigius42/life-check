@@ -1,7 +1,6 @@
 # Pi Flask Implementation Hints
 
-See [specs/pi-ha-status/spec.md](../specs/pi-ha-status/spec.md) and
-[design.md](../design.md).
+See [specs/pi-ha-status/spec.md](../specs/pi-ha-status/spec.md) and [design.md](../design.md).
 
 ## Module-level state
 
@@ -74,8 +73,6 @@ def home_assistant():
 ## Notes
 
 - `DETECTOR_REPORT_THRESHOLD` default is `"1"` — matches `reporter.py`.
-- The watcher detects midnight rollover implicitly: when `_read_counts()` returns
-  0 for a new day, `crossed` becomes False and `_set_ha_ok(False)` fires
-  immediately (correct — no jitter on reset).
-- Mark the watcher thread and timer as `daemon=True` so they don't block process
-  shutdown.
+- The watcher detects midnight rollover implicitly: when `_read_counts()` returns 0 for a new day, `crossed` becomes
+  False and `_set_ha_ok(False)` fires immediately (correct — no jitter on reset).
+- Mark the watcher thread and timer as `daemon=True` so they don't block process shutdown.

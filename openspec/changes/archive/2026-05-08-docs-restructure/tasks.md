@@ -5,7 +5,8 @@
 
 ## 2. Create route docs from README content
 
-- [x] 2.1 Rename `docs/hardware-raspberry-pi.md` → `docs/raspberry-pi.md`; fold in prerequisites, setup steps, Ansible roles
+- [x] 2.1 Rename `docs/hardware-raspberry-pi.md` → `docs/raspberry-pi.md`; fold in prerequisites, setup steps, Ansible
+  roles
 - [x] 2.2 Rename `docs/hardware-esp32.md` → `docs/esp32.md`; fold in prerequisites and ESPHome setup steps
 
 ## 3. Rewrite README as thin router
@@ -17,7 +18,8 @@
 
 ## 4. Update specs
 
-- [x] 4.1 Sync delta spec: update `openspec/specs/github-actions-ci/spec.md` path reference from `DEVELOPMENT.md` to `docs/development.md`
+- [x] 4.1 Sync delta spec: update `openspec/specs/github-actions-ci/spec.md` path reference from `DEVELOPMENT.md` to
+  `docs/development.md`
 - [x] 4.2 Update `docs-structure` delta spec to reflect final file names and README-as-router requirement
 
 ## 5. Verify

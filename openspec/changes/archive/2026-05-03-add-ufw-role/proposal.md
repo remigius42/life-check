@@ -1,6 +1,7 @@
 ## Why
 
-`ssh_manage_keys: false` leaves `PasswordAuthentication` enabled on this host. Even on a LAN-only Pi, ufw adds defense-in-depth by restricting all inbound traffic to explicitly allowed rules.
+`ssh_manage_keys: false` leaves `PasswordAuthentication` enabled on this host. Even on a LAN-only Pi, ufw adds
+defense-in-depth by restricting all inbound traffic to explicitly allowed rules.
 
 ## What Changes
 

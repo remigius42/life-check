@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 ## MODIFIED Requirements
 
 ### Requirement: docs/development.md documents CI

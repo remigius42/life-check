@@ -5,8 +5,8 @@
 ## Flask SSE generator
 
 One route, one generator, no extensions. Note: `static_folder` is configured via env var — see the
-[Flask binding](#flask-binding) and [Pico CSS](#pico-css) sections below for the full `Flask(__name__,
-static_folder=static_dir)` initialization.
+[Flask binding](#flask-binding--wsgi-server) and [Pico CSS](#pico-css) sections below for the full
+`Flask(__name__, static_folder=static_dir)` initialization.
 
 ```python
 import json
@@ -55,9 +55,12 @@ def stream():
 
 ## Test mode toggle endpoints
 
-Return 303 redirect to `GET /` — works with or without JS. When JS is enabled the EventSource stream also updates the DOM; the full page reload from the redirect is redundant but harmless. When JS is disabled the redirect is the only mechanism that reloads the page.
+Return 303 redirect to `GET /` — works with or without JS. When JS is enabled the EventSource stream also updates the
+DOM; the full page reload from the redirect is redundant but harmless. When JS is disabled the redirect is the only
+mechanism that reloads the page.
 
-`url_for("index")` resolves because `GET /` is mapped to `def index()` in the same file. Explicit 303 is required — Flask's `redirect()` defaults to 302, which is semantically incorrect for POST-Redirect-GET:
+`url_for("index")` resolves because `GET /` is mapped to `def index()` in the same file. Explicit 303 is required —
+Flask's `redirect()` defaults to 302, which is semantically incorrect for POST-Redirect-GET:
 
 ```python
 from flask import redirect, url_for
@@ -125,7 +128,9 @@ JS updates `action` and `value` live via the SSE handler above.
 
 ## Passing config to web.py
 
-Read from environment variables set in the systemd unit (`Environment=` lines in `beam-detector-web.service.j2`). `web.py` reads all paths directly from env vars — it does not read the shared INI config. `DETECTOR_COUNTS_PATH` is read for the initial page render (`GET /`); the SSE stream reads `DETECTOR_STATE_PATH`:
+Read from environment variables set in the systemd unit (`Environment=` lines in `beam-detector-web.service.j2`).
+`web.py` reads all paths directly from env vars — it does not read the shared INI config. `DETECTOR_COUNTS_PATH` is read
+for the initial page render (`GET /`); the SSE stream reads `DETECTOR_STATE_PATH`:
 
 ```ini
 [Service]
@@ -141,7 +146,10 @@ Environment=DETECTOR_PICO_CSS=pico-2.1.1.min.css
 
 ## Pico CSS
 
-Vendored at `roles/detector/files/static/pico-2.1.1.min.css` (version in filename for cache busting and auditability). Copied to `{{ detector_install_dir }}/static/pico-2.1.1.min.css` by Ansible. Filename passed to `web.py` via `DETECTOR_PICO_CSS` env var in the systemd unit. The fallback in the `os.environ.get` call matches the vendored filename — in production the systemd unit always overrides it via `DETECTOR_PICO_CSS`.
+Vendored at `roles/detector/files/static/pico-2.1.1.min.css` (version in filename for cache busting and auditability).
+Copied to `{{ detector_install_dir }}/static/pico-2.1.1.min.css` by Ansible. Filename passed to `web.py` via
+`DETECTOR_PICO_CSS` env var in the systemd unit. The fallback in the `os.environ.get` call matches the vendored filename
+— in production the systemd unit always overrides it via `DETECTOR_PICO_CSS`.
 
 ```python
 pico_css = os.environ.get("DETECTOR_PICO_CSS", "pico-2.1.1.min.css")
@@ -155,6 +163,7 @@ f'<link rel="stylesheet" href="/static/{pico_css}">'
 ```
 
 Semantic elements that get automatic styling relevant to this UI:
+
 - `<main>` — centered, max-width container with padding
 - `<article>` — card with border, padding, border-radius
 - `<button type="submit">` — styled primary button
@@ -176,7 +185,8 @@ Environment=DETECTOR_PICO_CSS=pico-{{ detector_pico_version }}.min.css
 
 ## Flask binding / WSGI server
 
-Deployment uses **Waitress** (`python3-waitress` apt package — no pip required, consistent with the apt-only constraint):
+Deployment uses **Waitress** (`python3-waitress` apt package — no pip required, consistent with the apt-only
+constraint):
 
 ```python
 from waitress import serve
@@ -186,8 +196,11 @@ if __name__ == "__main__":
     serve(app, host="0.0.0.0", port=port, threads=4)
 ```
 
-Waitress is multi-threaded out of the box — the SSE stream and the toggle POST are served concurrently without any extra flag. The systemd unit invokes `python3 web.py` directly.
+Waitress is multi-threaded out of the box — the SSE stream and the toggle POST are served concurrently without any extra
+flag. The systemd unit invokes `python3 web.py` directly.
 
-`threads=4` is sufficient for a single-user LAN deployment: one thread holds the SSE stream, the others serve page loads and toggle POSTs.
+`threads=4` is sufficient for a single-user LAN deployment: one thread holds the SSE stream, the others serve page loads
+and toggle POSTs.
 
-For local development `app.run(host="0.0.0.0", port=port, threaded=True)` can be used instead, but Waitress works fine locally too.
+For local development `app.run(host="0.0.0.0", port=port, threaded=True)` can be used instead, but Waitress works fine
+locally too.

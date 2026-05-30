@@ -4,8 +4,11 @@
 
 - [x] 1.1 Create `CHANGELOG.md` at repo root with keepachangelog 1.1.0 header and an `[Unreleased]` section
 - [x] 1.2 Write `[1.0.0]` entry summarizing current state across both routes:
-  - **ESP32/ESPHome route**: beam break counting, 14-day in-RAM history, daily Slack webhook with 3-tier messaging and configurable threshold, runtime-configurable settings via web UI (webhook URL, messages, threshold, retry count), test mode with 30-minute auto-revert, TTGO OLED opt-in, OTA updates
-  - **Raspberry Pi/Ansible route**: beam detector daemon, daily Slack webhook report, web status UI, Ansible role for deployment, fail2ban, UFW firewall, SSH hardening, CI via GitHub Actions
+  - **ESP32/ESPHome route**: beam break counting, 14-day in-RAM history, daily Slack webhook with 3-tier messaging and
+    configurable threshold, runtime-configurable settings via web UI (webhook URL, messages, threshold, retry count),
+    test mode with 30-minute auto-revert, TTGO OLED opt-in, OTA updates
+  - **Raspberry Pi/Ansible route**: beam detector daemon, daily Slack webhook report, web status UI, Ansible role for
+    deployment, fail2ban, UFW firewall, SSH hardening, CI via GitHub Actions
 
 ## 2. Tag baseline
 

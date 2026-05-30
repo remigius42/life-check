@@ -135,7 +135,8 @@ On load: if `"date"` ≠ today, `today_count` is NOT restored (counter starts at
 
 ## state.json structure
 
-Written to `/run/beam_detector/state.json` (tmpfs) on **every tick** (~20/s). Atomic write: write to `state.json.tmp`, then `os.replace()`.
+Written to `/run/beam_detector/state.json` (tmpfs) on **every tick** (~20/s). Atomic write: write to `state.json.tmp`,
+then `os.replace()`.
 
 ```json
 {"beam_broken": false, "today_count": 7, "test_mode": false}

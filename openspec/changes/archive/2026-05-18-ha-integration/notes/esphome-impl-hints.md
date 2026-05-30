@@ -1,14 +1,12 @@
 # ESPHome Implementation Hints
 
-See [specs/esphome-ha-status/spec.md](../specs/esphome-ha-status/spec.md) and
-[design.md](../design.md).
+See [specs/esphome-ha-status/spec.md](../specs/esphome-ha-status/spec.md) and [design.md](../design.md).
 
 ## Binary sensor: use `publish_state()`, not a polling lambda
 
-The `ha_status_sensor` must NOT use an `update_interval` lambda — that would
-push state on a timer regardless of jitter. Instead, give it no automatic
-updates and drive it exclusively via `publish_state()` from the jitter script
-and the midnight reset.
+The `ha_status_sensor` must NOT use an `update_interval` lambda — that would push state on a timer regardless of jitter.
+Instead, give it no automatic updates and drive it exclusively via `publish_state()` from the jitter script and the
+midnight reset.
 
 ```yaml
 binary_sensor:
@@ -17,8 +15,7 @@ binary_sensor:
     name: "HA Status"
 ```
 
-(No `lambda:` and no `update_interval:` — template binary sensors without a
-lambda are purely manually published.)
+(No `lambda:` and no `update_interval:` — template binary sensors without a lambda are purely manually published.)
 
 ## Jitter script: delay lambda syntax
 
@@ -37,9 +34,8 @@ script:
 
 ## Midnight reset: publish immediately, do not cancel pending script
 
-At midnight rollover, publish OFF immediately (no jitter — deterministic event).
-Do not cancel the jitter script if it happens to be running; when it eventually
-fires it will re-read `today_count` (now 0, below threshold) and publish OFF
+At midnight rollover, publish OFF immediately (no jitter — deterministic event). Do not cancel the jitter script if it
+happens to be running; when it eventually fires it will re-read `today_count` (now 0, below threshold) and publish OFF
 again — harmless.
 
 ```yaml
@@ -49,9 +45,8 @@ again — harmless.
 
 ## Trigger point
 
-Fire `script.execute: publish_ha_status` inside the beam-break automation,
-after incrementing `today_count`, only when the count exactly reaches threshold
-(to avoid re-triggering on subsequent breaks):
+Fire `script.execute: publish_ha_status` inside the beam-break automation, after incrementing `today_count`, only when
+the count exactly reaches threshold (to avoid re-triggering on subsequent breaks):
 
 ```yaml
 - if:

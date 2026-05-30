@@ -52,7 +52,8 @@ message = template.format(count=count)
 
 ## Default message templates
 
-The Ansible defaults (in `roles/detector/defaults/main.yml`) intentionally omit `{count}` for privacy. The examples below show `{count}` to illustrate the interpolation mechanism; they are NOT the actual defaults:
+The Ansible defaults (in `roles/detector/defaults/main.yml`) intentionally omit `{count}` for privacy. The examples
+below show `{count}` to illustrate the interpolation mechanism; they are NOT the actual defaults:
 
 ```python
 # usage examples — not the actual Ansible defaults
@@ -61,11 +62,13 @@ MSG_LOW  = "Beam breaks today: {count}\n🚨 breaks under threshold!"
 MSG_ZERO = "Beam breaks today: {count}\n⚠️ no breaks today, sensor might be down."
 ```
 
-`{count}` is the only interpolation token. Use `str.format(count=N)` — not f-strings, so the template can be stored as a plain string in an Ansible variable override.
+`{count}` is the only interpolation token. Use `str.format(count=N)` — not f-strings, so the template can be stored as a
+plain string in an Ansible variable override.
 
 ## counts.json read
 
-Path comes from the `DETECTOR_COUNTS_PATH` environment variable. If the stored `"date"` differs from today, treat count as 0:
+Path comes from the `DETECTOR_COUNTS_PATH` environment variable. If the stored `"date"` differs from today, treat count
+as 0:
 
 ```python
 import datetime
@@ -112,7 +115,8 @@ if count is None:
 
 ## Guard: empty webhook URL
 
-Log a warning and exit 0 if URL is not configured — avoids systemd failed-unit noise, but the skip is still visible in the journal:
+Log a warning and exit 0 if URL is not configured — avoids systemd failed-unit noise, but the skip is still visible in
+the journal:
 
 ```python
 if not webhook_url:
@@ -122,13 +126,15 @@ if not webhook_url:
 
 ## Passing config to the reporter
 
-All config is passed via environment variables set in `beam-detector-report.service.j2` (`Environment=` lines). The reporter reads only `os.environ` — it does NOT read `/etc/beam_detector/config.ini` directly. This keeps secrets out of the shared INI file and makes the reporter self-contained.
+All config is passed via environment variables set in `beam-detector-report.service.j2` (`Environment=` lines). The
+reporter reads only `os.environ` — it does NOT read `/etc/beam_detector/config.ini` directly. This keeps secrets out of
+the shared INI file and makes the reporter self-contained.
 
-| env var | Ansible source |
-|---|---|
-| `DETECTOR_COUNTS_PATH` | `detector_counts_path` |
+| env var                       | Ansible source                |
+| ----------------------------- | ----------------------------- |
+| `DETECTOR_COUNTS_PATH`        | `detector_counts_path`        |
 | `DETECTOR_REPORT_WEBHOOK_URL` | `detector_report_webhook_url` |
-| `DETECTOR_REPORT_THRESHOLD` | `detector_report_threshold` |
-| `DETECTOR_REPORT_MSG_OK` | `detector_report_msg_ok` |
-| `DETECTOR_REPORT_MSG_LOW` | `detector_report_msg_low` |
-| `DETECTOR_REPORT_MSG_ZERO` | `detector_report_msg_zero` |
+| `DETECTOR_REPORT_THRESHOLD`   | `detector_report_threshold`   |
+| `DETECTOR_REPORT_MSG_OK`      | `detector_report_msg_ok`      |
+| `DETECTOR_REPORT_MSG_LOW`     | `detector_report_msg_low`     |
+| `DETECTOR_REPORT_MSG_ZERO`    | `detector_report_msg_zero`    |

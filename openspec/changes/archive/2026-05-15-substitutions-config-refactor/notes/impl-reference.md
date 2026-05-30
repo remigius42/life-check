@@ -4,20 +4,20 @@
 
 Every value being moved, with source → destination and current/default value.
 
-| Key | From | To | Value |
-|---|---|---|---|
-| `beam_gpio_pin` | `secrets.yaml` (`!secret`) | `substitutions:` | `GPIO13` |
-| `timezone` | `secrets.yaml` (`!secret`) | `substitutions:` | `"Europe/Zurich"` |
-| `msg_ok` | `secrets.yaml` (`!secret`) | `substitutions:` | `"Beam breaks today: ✅ OK (equal or above threshold)"` |
-| `msg_low` | `secrets.yaml` (`!secret`) | `substitutions:` | `"Beam breaks today: 🚨 under threshold"` |
-| `msg_zero` | `secrets.yaml` (`!secret`) | `substitutions:` | `"Beam breaks today: 0 ⚠️ no breaks today, sensor might be down."` |
-| `notification_hour` | hardcoded `hours: 17` | `substitutions:` | `"17"` |
-| `notification_minute` | (did not exist) | `substitutions:` | `"0"` |
-| `test_mode_timeout` | hardcoded `delay: 30min` | `substitutions:` | `30min` |
-| `http_timeout` | hardcoded `timeout: 10s` | `substitutions:` | `10s` |
-| `break_threshold` | `initial_value: 2` | `substitutions:` | `"2"` |
-| `webhook_retries` | `initial_value: 3` | `substitutions:` | `"3"` |
-| `beam_debounce` | hardcoded `100ms` (×2) | `substitutions:` | `100ms` |
+| Key                   | From                       | To               | Value                                                              |
+| --------------------- | -------------------------- | ---------------- | ------------------------------------------------------------------ |
+| `beam_gpio_pin`       | `secrets.yaml` (`!secret`) | `substitutions:` | `GPIO13`                                                           |
+| `timezone`            | `secrets.yaml` (`!secret`) | `substitutions:` | `"Europe/Zurich"`                                                  |
+| `msg_ok`              | `secrets.yaml` (`!secret`) | `substitutions:` | `"Beam breaks today: ✅ OK (equal or above threshold)"`            |
+| `msg_low`             | `secrets.yaml` (`!secret`) | `substitutions:` | `"Beam breaks today: 🚨 under threshold"`                          |
+| `msg_zero`            | `secrets.yaml` (`!secret`) | `substitutions:` | `"Beam breaks today: 0 ⚠️ no breaks today, sensor might be down."` |
+| `notification_hour`   | hardcoded `hours: 17`      | `substitutions:` | `"17"`                                                             |
+| `notification_minute` | (did not exist)            | `substitutions:` | `"0"`                                                              |
+| `test_mode_timeout`   | hardcoded `delay: 30min`   | `substitutions:` | `30min`                                                            |
+| `http_timeout`        | hardcoded `timeout: 10s`   | `substitutions:` | `10s`                                                              |
+| `break_threshold`     | `initial_value: 2`         | `substitutions:` | `"2"`                                                              |
+| `webhook_retries`     | `initial_value: 3`         | `substitutions:` | `"3"`                                                              |
+| `beam_debounce`       | hardcoded `100ms` (×2)     | `substitutions:` | `100ms`                                                            |
 
 Message defaults sourced from `roles/detector/defaults/main.yml` lines 23–25.
 

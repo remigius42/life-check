@@ -4,13 +4,18 @@
 
 ## NVS / restore_value gotchas
 
-**String length limit**: ESPHome's default NVS string storage is 63 chars. The Slack webhook URL is ~88 chars (`https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`), so every `text` entity needs `max_restore_data_length: 254` explicitly set.
+**String length limit**: ESPHome's default NVS string storage is 63 chars. The Slack webhook URL is ~88 chars
+(`https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`), so every `text` entity needs
+`max_restore_data_length: 254` explicitly set.
 
-**NVS exhaustion bug (ESPHome 2026.2.0)**: Accumulating many NVS-persisted values can exhaust the NVS partition. Keep NVS use to the 6 configured entities (4 `text` + 2 `number`) and use `restore_value: false` for all RAM globals.
+**NVS exhaustion bug (ESPHome 2026.2.0)**: Accumulating many NVS-persisted values can exhaust the NVS partition. Keep
+NVS use to the 6 configured entities (4 `text` + 2 `number`) and use `restore_value: false` for all RAM globals.
 
 ## C++ array globals
 
-ESPHome `globals` supports scalar types natively. For the 14-element history array, use a custom C++ global via `esphome/components/globals/globals_component.h` isn't needed — just declare it in a lambda's global scope using `esphome`'s custom `global_variable` or, simpler, use an `esphome` `globals` component with type `int[14]`:
+ESPHome `globals` supports scalar types natively. For the 14-element history array, use a custom C++ global via
+`esphome/components/globals/globals_component.h` isn't needed — just declare it in a lambda's global scope using
+`esphome`'s custom `global_variable` or, simpler, use an `esphome` `globals` component with type `int[14]`:
 
 ```yaml
 globals:
@@ -74,7 +79,8 @@ script:
           }
 ```
 
-**Note**: `http_request.post` is an ESPHome action, not callable from a C++ lambda directly. The cleanest approach is a recursive script or a counter global + interval check. Recommended pattern:
+**Note**: `http_request.post` is an ESPHome action, not callable from a C++ lambda directly. The cleanest approach is a
+recursive script or a counter global + interval check. Recommended pattern:
 
 ```yaml
 globals:
@@ -138,7 +144,8 @@ script:
       - switch.turn_off: test_mode_switch
 ```
 
-`mode: restart` ensures re-enabling test mode resets the 30-minute clock. `script.stop` in `turn_off_action` cancels the pending delay cleanly.
+`mode: restart` ensures re-enabling test mode resets the 30-minute clock. `script.stop` in `turn_off_action` cancels the
+pending delay cleanly.
 
 ## 3-tier message selection
 
@@ -164,7 +171,8 @@ script:
     id(webhook_message) = tmpl;
 ```
 
-Requires an additional `std::string` global `webhook_message` to pass the message from the lambda to the `http_request` action. Add `#include <string>` is not needed — ESPHome includes it via Arduino/ESP-IDF headers.
+Requires an additional `std::string` global `webhook_message` to pass the message from the lambda to the `http_request`
+action. Add `#include <string>` is not needed — ESPHome includes it via Arduino/ESP-IDF headers.
 
 ## web_server authentication
 

@@ -1,4 +1,9 @@
-.claude/
-.gemini/
-.opencode/
-openspec/
+# AI assistant scaffolding — generated files, not user content
+.claude/commands/opsx/**
+.claude/skills/openspec-**
+.gemini/skills/openspec-**
+.opencode/command/opsx-**
+.opencode/skills/openspec-**
+
+# Spec files: MD013 is disabled inline per file via <!-- markdownlint-disable MD013 -->.
+# Codacy cannot use inline disables; it uses engines.markdownlint.exclude_paths in .codacy.yaml.

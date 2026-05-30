@@ -1,46 +1,60 @@
+<!-- markdownlint-disable MD013 -->
+
 ## Purpose
+
 Define the beam-detector web status UI: a single-page Flask/Waitress app that shows live beam state and today's break count via SSE, and allows toggling test mode via HTML form POST.
 
 ## Requirements
 
 ### Requirement: Status page shows today's break count
+
 The web server SHALL expose a status page at `GET /` that displays today's beam-break count read from `/var/lib/beam_detector/counts.json` (configurable via `DETECTOR_COUNTS_PATH` env var). The file has the structure `{"date": "YYYY-MM-DD", "today_count": <integer>, "history": {...}}`. If the file is missing, unreadable, or the stored `"date"` differs from today's local date, the displayed count SHALL be 0.
 
 #### Scenario: Count displayed correctly
+
 - **WHEN** a browser requests `GET /`
 - **THEN** the page shows today's break count as read from `counts.json`
 
 #### Scenario: Missing counts.json
+
 - **WHEN** `counts.json` does not exist
 - **THEN** the page shows a count of 0 without raising an error
 
 #### Scenario: Stale date in counts.json
+
 - **WHEN** the stored date in `counts.json` differs from today
 - **THEN** the page displays 0 as today's count
 
 ### Requirement: Status page shows test mode state
+
 The status page SHALL display whether test mode is currently active (sentinel file `/run/beam_detector/test_mode` exists) or inactive.
 
 #### Scenario: Test mode active
+
 - **WHEN** the sentinel file exists and `GET /` is requested
 - **THEN** the page indicates test mode is ON
 
 #### Scenario: Test mode inactive
+
 - **WHEN** the sentinel file does not exist and `GET /` is requested
 - **THEN** the page indicates test mode is OFF
 
 ### Requirement: Test mode toggle via HTML form
+
 The status page SHALL include a form with a single button. When test mode is OFF, the button SHALL submit `POST /test-mode/enable`. When test mode is ON, the button SHALL submit `POST /test-mode/disable`. After the POST, the server SHALL respond with HTTP 303 See Other redirecting to `GET /`.
 
 #### Scenario: Enable test mode
+
 - **WHEN** the user clicks the enable button (test mode is OFF)
 - **THEN** `POST /test-mode/enable` is called, the sentinel file is created, and the page reloads showing test mode ON
 
 #### Scenario: Disable test mode
+
 - **WHEN** the user clicks the disable button (test mode is ON)
 - **THEN** `POST /test-mode/disable` is called, the sentinel file is deleted, and the page reloads showing test mode OFF
 
 ### Requirement: Live beam state display via SSE
+
 The status page SHALL display the current beam state (broken/clear) and today's break count, updated in real time via Server-Sent Events. The page SHALL connect to `GET /stream` (SSE endpoint) using the browser `EventSource` API. The server SHALL push a JSON event whenever beam state or count changes, read from `/run/beam_detector/state.json` (configurable via `DETECTOR_STATE_PATH` env var) on tmpfs. Each pushed event SHALL be a JSON object with exactly the fields written by the daemon:
 
 ```json
@@ -54,59 +68,74 @@ The status page SHALL display the current beam state (broken/clear) and today's 
 The DOM SHALL update within one daemon poll interval (50 ms) plus one network RTT of the daemon writing the state change. All timing scenarios below use this same bound.
 
 #### Scenario: Beam broken reflected immediately
+
 - **WHEN** the beam is interrupted and the daemon writes `state.json`
 - **THEN** the browser updates the beam state indicator to "broken" within ~50 ms (one daemon poll interval + network RTT)
 
 #### Scenario: Beam restored reflected immediately
+
 - **WHEN** the beam is restored and the daemon writes `state.json`
 - **THEN** the browser updates the beam state indicator to "clear" within ~50 ms
 
 #### Scenario: Count increments in real time
+
 - **WHEN** a break event occurs in normal mode and the daemon increments the count
 - **THEN** the displayed count updates in the browser without a page reload
 
 #### Scenario: SSE reconnects after interruption
+
 - **WHEN** the SSE connection is dropped (e.g. web service restart)
 - **THEN** the browser `EventSource` reconnects automatically and resumes receiving events
 
 ### Requirement: Web server binds to configurable port
+
 The Flask server SHALL listen on `0.0.0.0:{{ detector_web_port }}` (default 8080). The port SHALL be configurable via the Ansible variable `detector_web_port`.
 
 #### Scenario: Server accessible on configured port
+
 - **WHEN** the service is running and `detector_web_port` is set to 8080
 - **THEN** `http://<host>:8080/` returns the status page
 
----
+______________________________________________________________________
 
 ### Requirement: Status page branding and links
+
 The web UI SHALL be titled "Life Check" in both the HTML `<title>` and the primary `<h1>` header. The page footer SHALL contain a link to the source repository (`https://www.github.com/remigius42/life-check`) and the deployed project version string read from the `DETECTOR_VERSION` environment variable (default `"unknown"`).
 
 #### Scenario: Branding verified
+
 - **WHEN** the status page is loaded
 - **THEN** the title is "Life Check" and the GitHub link is present in the footer
 
 #### Scenario: Version shown in footer
+
 - **WHEN** the status page is loaded and `DETECTOR_VERSION` is set (e.g. `v2.2.1-3-g543b3e5`)
 - **THEN** the footer displays the version string
 
 #### Scenario: Version falls back to unknown
+
 - **WHEN** the status page is loaded and `DETECTOR_VERSION` is not set
 - **THEN** the footer displays `"unknown"`
 
 ### Requirement: Improved layout, styling, and accessibility
+
 The web UI SHALL use the Pico CSS `.container` class to provide centered, responsive layout with appropriate padding, remaining usable down to a 320px viewport width. All submit buttons SHALL be styled with `width: auto`.
 
 The UI SHALL be accessible:
+
 - All interactive elements (buttons, links) SHALL have descriptive text or ARIA labels.
 - Visible focus states SHALL be maintained for keyboard navigation.
 - The status indicator SHALL use both color and text (e.g., "🔴 BROKEN") to remain usable for color-blind users.
 
 #### Scenario: Layout and accessibility verified
+
 - **WHEN** the status page is viewed on mobile and desktop browsers
 - **THEN** content is centered, buttons are not stretched, and keyboard navigation (Tab key) correctly highlights interactive elements
 
 ### Requirement: Status page shows historical data
+
 The status page SHALL display up to the last 14 days of break-beam history as read from `counts.json`.
+
 - Entries SHALL be sorted by date descending (newest first).
 - Dates SHALL be formatted as "YYYY-MM-DD".
 - History SHALL be rendered as a two-column table with headers "Date" and "Count".
@@ -114,22 +143,28 @@ The status page SHALL display up to the last 14 days of break-beam history as re
 - If fewer than 14 days of data exist, only existing entries SHALL be shown (no synthesized data).
 
 #### Scenario: History displayed correctly
+
 - **WHEN** the status page is loaded and `counts.json` contains valid history
 - **THEN** a table titled "History" shows recent daily totals in descending date order
 
 ### Requirement: Count reset via HTML form
+
 The status page SHALL include a form with a "Reset Today's Count" button. When submitted, this form SHALL `POST /reset-count`. The server SHALL create the reset sentinel file and then respond with HTTP 303 See Other redirecting to `GET /`.
 
 #### Scenario: Reset count button clicked
+
 - **WHEN** the user clicks "Reset Today's Count"
 - **THEN** `POST /reset-count` is called, the reset sentinel is created, and the page reloads
 
 ### Requirement: Testability of new UI elements
+
 The new UI elements (History section, Reset button, GitHub link) SHALL be easily targetable by automated tests via stable HTML `id` attributes:
+
 - The history section/table SHALL have `id="history"`.
 - The reset button SHALL have `id="reset-count"`.
 - The GitHub link SHALL have `id="github-link"`.
 
 #### Scenario: Elements targetable by tests
+
 - **WHEN** a test runner inspects the status page
 - **THEN** it can find the history, reset, and github-link elements by their respective IDs

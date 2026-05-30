@@ -3,6 +3,7 @@
 Full git log from first commit to HEAD (e4d52c8), grouped by theme for writing the CHANGELOG entry.
 
 ## ESP32 / ESPHome route
+
 - `f9dd23d` feat: add ESPHome/ESP32 deployment route
 - `76e075e` fix: correct GPIO signal polarity for NPN sensor
 - `0e0cbbd` feat: add branding, manual reset, and history
@@ -10,6 +11,7 @@ Full git log from first commit to HEAD (e4d52c8), grouped by theme for writing t
 - `e4d52c8` docs: add TTGO OLED hardware photo to ESP32 guide
 
 ## Raspberry Pi / Ansible route
+
 - `37bea86` feat: add beam-detector daemon and Ansible role
 - `5f2b1c6` feat: add daily beam-break reporter
 - `1aba205` feat: add beam-detector web UI with SSE
@@ -21,11 +23,13 @@ Full git log from first commit to HEAD (e4d52c8), grouped by theme for writing t
 - `07d921b` fix: load vault in both playbooks
 
 ## CI / tooling
+
 - `85138bf` ci: add GitHub Actions workflow running pre-commit
 - `ea338ea` chore: standardize dev toolchain on Python 3.13
 - `a53d592` chore: refactor pre-commit config
 
 ## Docs
+
 - `4517af7` docs: add README, DEVELOPMENT, and wiring diagram
 - `b8ec0dd` docs: add NOTIFICATIONS.md with webhook setup
 - `44ca919` docs: add comprehensive hardware BOM & route links
