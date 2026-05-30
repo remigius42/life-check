@@ -1,3 +1,5 @@
+# spellchecker:ignore numpy pydocstyle
+
 [tool.black]
 line-length = 88
 target-version = ["py313"]
@@ -7,7 +9,12 @@ line-length = 88
 target-version = "py313"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]  # pycodestyle, pyflakes, isort
+select = ["E", "F", "W", "I", "D"]  # pycodestyle, pyflakes, isort, pydocstyle
+ignore = [
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106",  # missing-docstring rules not enforced by Codacy/Prospector
+    "D203",  # conflicts with black (black enforces D211: no blank line before class docstring)
+    "D212",  # conflicts: Codacy uses D213 (summary on second line)
+]
 
 [tool.pyright]
 pythonVersion = "3.13"

@@ -60,8 +60,9 @@ _HA_JITTER_MAX_ADD_S = max(
 
 def _in_privacy_window() -> bool:
     """
-    Return True during the nightly window [report_time, privacy_window_end) when
-    HA must report not_ok.
+    Return True during the nightly window [report_time, privacy_window_end).
+
+    HA must report not_ok during this window.
     """
     now = datetime.now().time().replace(second=0, microsecond=0)
     start = _HA_REPORT_TIME
@@ -127,8 +128,9 @@ def _cancel_ha_timer() -> None:
 
 def _watch_ha_state() -> None:
     """
-    Background thread: tracks threshold crossings and
-    drives the jitter timer for _ha_ok.
+    Background thread: tracks threshold crossings.
+
+    Drives the jitter timer for _ha_ok.
     """
     try:
         count, _ = _read_counts()
@@ -164,8 +166,9 @@ if not any(t.name == "ha-watcher" for t in threading.enumerate()):
 
 def _read_state() -> dict:
     """
-    Read state.json written by the detector daemon;
-    returns safe defaults on error.
+    Read state.json written by the detector daemon.
+
+    Returns safe defaults on error.
     """
     try:
         return json.loads(STATE_PATH.read_text())
@@ -194,7 +197,7 @@ def _read_counts() -> tuple[int, list[tuple[str, int]]]:
 
 
 def _sse_stream():
-    """Generator yielding SSE frames whenever state.json changes (polled at 50 ms)."""
+    """Yield SSE frames whenever state.json changes (polled at 50 ms)."""
     last = None
     while True:
         state = _read_state()

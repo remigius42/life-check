@@ -20,6 +20,7 @@ from detector import BeamDetector, Config, RpiGpioPort  # noqa: E402
 
 class FakeGpioPort:
     def __init__(self, state: bool = False) -> None:
+        """Initialise with optional initial pin state."""
         self.state = state
         self.cleaned_up = False
 
