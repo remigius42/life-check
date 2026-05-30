@@ -36,6 +36,13 @@ pre-commit run --all-files
 Hooks include: Black, Ruff, Pyright, ansible-lint, mdformat, markdownlint, cspell, shellcheck,
 gitleaks, and openspec validation.
 
+Pure formatting commits are listed in `.git-blame-ignore-revs`. To have `git blame` skip them
+automatically:
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
 ## Commit messages
 
 Conventional Commits enforced by commitlint (`commitlint.config.js`). Examples:
