@@ -5,5 +5,5 @@
 .opencode/command/opsx-**
 .opencode/skills/openspec-**
 
-# Spec files: MD013 is disabled inline per file via <!-- markdownlint-disable MD013 -->.
-# Codacy cannot use inline disables; it uses engines.markdownlint.exclude_paths in .codacy.yaml.
+# Spec files: MD013 is disabled inline per file via <!-- markdownlint-disable MD013 -->,
+# since Codacy does not support globs in ignore files.
