@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import argparse
 import configparser
 import datetime
 import json
@@ -44,7 +45,8 @@ class RpiGpioPort:
         """Initialise pin, retry count, and optional injectable dependencies."""
         gpio: Any = _gpio_module
         if gpio is None:
-            import RPi.GPIO as _rpi_gpio  # lazy — not available on dev machine
+            # import lazy: RPi.GPIO is unavailable on dev machines
+            import RPi.GPIO as _rpi_gpio  # pylint: disable=import-outside-toplevel
 
             gpio = _rpi_gpio
         self._gpio: Any = gpio
@@ -337,8 +339,6 @@ class BeamDetector:
 
 
 def main() -> None:
-    import argparse
-
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
