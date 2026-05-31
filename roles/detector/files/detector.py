@@ -238,19 +238,19 @@ class BeamDetector:
         self._today_count += 1
         self._save()
 
-    def _load(self) -> None:
+    def _load_counts_data(self) -> dict | None:
         try:
-            raw = self._cfg.counts_path.read_text()
+            raw = self._cfg.counts_path.read_text(encoding="utf-8")
         except FileNotFoundError:
-            return
+            return None
         except OSError as exc:
             _log.error(
                 "Could not read %s: %s — starting fresh", self._cfg.counts_path, exc
             )
             self._rename_bad_counts()
-            return
+            return None
         try:
-            data = json.loads(raw)
+            return json.loads(raw)
         except json.JSONDecodeError as exc:
             _log.error(
                 "Corrupt %s: %s — renaming to .bak and starting fresh",
@@ -258,6 +258,11 @@ class BeamDetector:
                 exc,
             )
             self._rename_bad_counts()
+            return None
+
+    def _load(self) -> None:
+        data = self._load_counts_data()
+        if data is None:
             return
         today = datetime.date.today().isoformat()
         stored_date = data.get("date")
