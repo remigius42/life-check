@@ -1,0 +1,9 @@
+# spellchecker:ignore numpy pydocstyle
+
+pydocstyle:
+  options:
+    add-ignore:
+      - D203  # conflicts with black (D211: no blank line before class docstring)
+      - D213  # conflicts with D212 — using D212 (summary on first line)
+      - D406  # not using numpy style
+      - D407  # not using numpy style
