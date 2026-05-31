@@ -125,6 +125,27 @@ def _cancel_ha_timer() -> None:
         _ha_epoch += 1
 
 
+def _tick_ha_watcher(last_crossed: bool) -> bool:
+    """Evaluate current count and update HA state if threshold status changed.
+
+    Returns the new crossed state for the next tick.
+    """
+    count, _ = _read_counts()
+    crossed = count >= _HA_THRESHOLD
+    threshold_crossed = crossed and not last_crossed
+    midnight_reset = not crossed and last_crossed
+    if crossed:
+        if not _in_privacy_window():
+            _maybe_start_jitter_timer()
+        elif threshold_crossed:
+            _cancel_ha_timer()
+            _set_ha_ok(False)
+    elif midnight_reset:
+        _cancel_ha_timer()
+        _set_ha_ok(False)
+    return crossed
+
+
 def _watch_ha_state() -> None:
     """Background thread: tracks threshold crossings.
 
@@ -139,18 +160,7 @@ def _watch_ha_state() -> None:
         _set_ha_ok(True)  # already crossed before restart — no jitter needed
     while True:
         try:
-            count, _ = _read_counts()
-            crossed = count >= _HA_THRESHOLD
-            if crossed and not last_crossed:
-                if not _in_privacy_window():
-                    _maybe_start_jitter_timer()
-                else:
-                    _cancel_ha_timer()
-                    _set_ha_ok(False)
-            elif not crossed and last_crossed:
-                _cancel_ha_timer()
-                _set_ha_ok(False)  # midnight reset — no jitter (deterministic event)
-            last_crossed = crossed
+            last_crossed = _tick_ha_watcher(last_crossed)
         except Exception as exc:
             _log.warning("HA watcher error: %s", exc)
         time.sleep(1)
