@@ -74,7 +74,7 @@ def _read_count(counts_path):
     """Return today's break count from counts.json, or None to skip reporting."""
     today = datetime.date.today().isoformat()
     try:
-        with open(counts_path) as f:
+        with open(counts_path, encoding="utf-8") as f:
             data = json.load(f)
     except FileNotFoundError:
         log.warning("counts.json not found at %s; skipping report", counts_path)
