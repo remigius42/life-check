@@ -111,7 +111,7 @@ def _maybe_start_jitter_timer() -> None:
     with _ha_lock:
         epoch = _ha_epoch
     # nosec B311 — jitter delay, not a security/cryptographic token
-    delay = 900 + random.random() * _HA_JITTER_MAX_ADD_S
+    delay = 900 + random.random() * _HA_JITTER_MAX_ADD_S  # nosec B311
     _ha_timer = threading.Timer(delay, _jitter_callback, args=(epoch,))
     _ha_timer.daemon = True
     _ha_timer.start()
@@ -397,4 +397,4 @@ def reset_count():
 if __name__ == "__main__":
     port = int(os.environ.get("DETECTOR_WEB_PORT", 8080))
     # nosec B104 — intentional: LAN-accessible UI on RPi, spec requires 0.0.0.0
-    serve(app, host="0.0.0.0", port=port, threads=4)
+    serve(app, host="0.0.0.0", port=port, threads=4)  # nosec B104
