@@ -516,11 +516,11 @@ class TestGpioInitRetry(unittest.TestCase):
 
     def test_succeeds_after_transient_failures(self):
         sleep_calls = []
-        gpio_mod, calls = self._make_gpio(fail_times=2)
+        gpio_mod, _ = self._make_gpio(fail_times=2)
         port = RpiGpioPort(
             17,
             retries=3,
-            _sleep_fn=lambda s: sleep_calls.append(s),
+            _sleep_fn=sleep_calls.append,
             _gpio_module=gpio_mod,
         )
         self.assertIsNotNone(port)

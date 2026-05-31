@@ -94,7 +94,8 @@ def _read_count(counts_path):
         return 0
 
     raw = data.get("today_count")
-    if type(raw) is not int:
+    # usage of type intentional; rejects bool (bool is subclass of int)
+    if type(raw) is not int:  # noqa: E721  # pylint: disable=unidiomatic-typecheck
         log.warning("today_count is not an integer (%r); using count=0", raw)
         return 0
     if raw < 0:
