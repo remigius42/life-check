@@ -119,7 +119,7 @@ def _post(url, message):
     )
     try:
         # nosec B310 — URL is always the operator-configured webhook, not user input
-        with urllib.request.urlopen(req, timeout=10):
+        with urllib.request.urlopen(req, timeout=10):  # nosec B310
             pass
     except urllib.error.HTTPError as exc:
         try:
