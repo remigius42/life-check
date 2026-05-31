@@ -32,7 +32,7 @@ def main():
 
     threshold_raw = os.environ.get("DETECTOR_REPORT_THRESHOLD", "1")
     try:
-        threshold = int(threshold_raw)
+        threshold = max(1, int(threshold_raw))
     except ValueError:
         log.warning(
             "Could not parse DETECTOR_REPORT_THRESHOLD=%r; using 1", threshold_raw
