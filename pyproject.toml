@@ -13,7 +13,15 @@ select = ["E", "F", "W", "I", "D"]  # pycodestyle, pyflakes, isort, pydocstyle
 ignore = [
     "D100", "D101", "D102", "D103", "D104", "D105", "D106",  # missing-docstring rules not enforced by Codacy/Prospector
     "D203",  # conflicts with black (black enforces D211: no blank line before class docstring)
-    "D212",  # conflicts: Codacy uses D213 (summary on second line)
+    "D213",  # conflicts with D212 — using D212 (summary on first line)
+]
+
+[tool.pydocstyle]
+ignore = [
+    "D203",  # conflicts with black (D211)
+    "D213",  # conflicts with D212 — using D212
+    "D406",  # not using numpy style
+    "D407",  # not using numpy style
 ]
 
 [tool.pyright]

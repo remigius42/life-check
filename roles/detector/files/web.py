@@ -59,8 +59,7 @@ _HA_JITTER_MAX_ADD_S = max(
 
 
 def _in_privacy_window() -> bool:
-    """
-    Return True during the nightly window [report_time, privacy_window_end).
+    """Return True during the nightly window [report_time, privacy_window_end).
 
     HA must report not_ok during this window.
     """
@@ -127,8 +126,7 @@ def _cancel_ha_timer() -> None:
 
 
 def _watch_ha_state() -> None:
-    """
-    Background thread: tracks threshold crossings.
+    """Background thread: tracks threshold crossings.
 
     Drives the jitter timer for _ha_ok.
     """
@@ -165,8 +163,7 @@ if not any(t.name == "ha-watcher" for t in threading.enumerate()):
 
 
 def _read_state() -> dict:
-    """
-    Read state.json written by the detector daemon.
+    """Read state.json written by the detector daemon.
 
     Returns safe defaults on error.
     """

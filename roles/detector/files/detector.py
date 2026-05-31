@@ -29,8 +29,7 @@ class GpioPort(Protocol):
 
 
 class RpiGpioPort:
-    """
-    Production GPIO pin backed by RPi.GPIO.
+    """Production GPIO pin backed by RPi.GPIO.
 
     Imported lazily so the module loads on non-Pi machines for testing.
     """
@@ -78,8 +77,7 @@ class RpiGpioPort:
 
 @dataclass
 class Config:
-    """
-    Runtime configuration.
+    """Runtime configuration.
 
     Defaults must stay in sync with
     roles/detector/defaults/main.yml — the script is deployed verbatim (not as
@@ -125,8 +123,7 @@ class Config:
 
 
 class BeamDetector:
-    """
-    Polling loop that detects rising edges on a GPIO pin.
+    """Polling loop that detects rising edges on a GPIO pin.
 
     Maintains a daily break counter and persists history to counts.json.
     """
@@ -203,8 +200,7 @@ class BeamDetector:
             self._test_mode_entered_at = None
 
     def _maybe_reset_count(self) -> bool:
-        """
-        Check for reset sentinel and reset today's count.
+        """Check for reset sentinel and reset today's count.
 
         Returns True if a reset was performed in this iteration.
         """
