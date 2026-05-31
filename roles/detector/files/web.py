@@ -179,7 +179,7 @@ def _read_state() -> dict:
     Returns safe defaults on error.
     """
     try:
-        return json.loads(STATE_PATH.read_text())
+        return json.loads(STATE_PATH.read_text(encoding="utf-8"))
     except OSError as exc:
         _log.debug("Could not read %s: %s", STATE_PATH, exc)
         return {"beam_broken": False, "today_count": 0, "test_mode": False}
@@ -191,7 +191,7 @@ def _read_state() -> dict:
 def _read_counts() -> tuple[int, list[tuple[str, int]]]:
     """Read counts.json and return (today_count, sorted_history_list)."""
     try:
-        data = json.loads(COUNTS_PATH.read_text())
+        data = json.loads(COUNTS_PATH.read_text(encoding="utf-8"))
         history_dict = data.get("history", {})
         # Sort history descending by date (ISO 8601 strings sort correctly)
         history = sorted(history_dict.items(), key=lambda x: x[0], reverse=True)
