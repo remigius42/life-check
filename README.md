@@ -6,6 +6,8 @@ Copyright 2026 [Andreas Remigius Schmidt](https://github.com/remigius42)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20OS%20Bookworm-lightgrey.svg)
 ![Platform](https://img.shields.io/badge/platform-ESP32%20%2B%20ESPHome-lightgrey.svg)
 [![CI](https://github.com/remigius42/life-check/actions/workflows/ci.yml/badge.svg)](https://github.com/remigius42/life-check/actions/workflows/ci.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/52c1b37843b548e4a45e6a7aac01aa18)](https://app.codacy.com/gh/remigius42/life-check/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/remigius42/life-check?utm_source=oss&utm_medium=github&utm_campaign=remigius42%2Flife-check&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai)
 [![Version](https://img.shields.io/github/v/tag/remigius42/life-check?sort=semver)](https://github.com/remigius42/life-check/tags)
 
 An unobtrusive life-check system for elderly people — a positive take on the
