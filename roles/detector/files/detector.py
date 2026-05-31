@@ -25,8 +25,12 @@ _log = logging.getLogger(__name__)
 class GpioPort(Protocol):
     """Abstraction over a single GPIO input pin. Inject a fake in tests."""
 
-    def read(self) -> bool: ...
-    def cleanup(self) -> None: ...
+    # fmt: off
+    def read(self) -> bool:
+        ...
+    def cleanup(self) -> None:
+        ...
+    # fmt: on
 
 
 class RpiGpioPort:
