@@ -266,13 +266,7 @@ class BeamDetector:
             return
         today = datetime.date.today().isoformat()
         stored_date = data.get("date")
-        try:
-            raw_count = int(data.get("today_count", 0))
-        except (ValueError, TypeError):
-            _log.warning(
-                "Non-numeric today_count in %s — using 0", self._cfg.counts_path
-            )
-            raw_count = 0
+        raw_count = self._get_raw_today_count(data)
         if stored_date == today:
             self._today_count = raw_count
         elif stored_date and stored_date < today:
@@ -281,6 +275,18 @@ class BeamDetector:
             _log.warning(
                 "counts.json has future date %s — discarding today_count", stored_date
             )
+        self._load_history(data)
+
+    def _get_raw_today_count(self, data: dict) -> int:
+        try:
+            return int(data.get("today_count", 0))
+        except (ValueError, TypeError):
+            _log.warning(
+                "Non-numeric today_count in %s — using 0", self._cfg.counts_path
+            )
+            return 0
+
+    def _load_history(self, data: dict) -> None:
         for k, v in data.get("history", {}).items():
             try:
                 self._history[k] = int(v)
