@@ -468,6 +468,23 @@ class TestWatchHaStatePrivacyWindowTransition(unittest.TestCase):
         )
         mock_jitter.assert_called_once()
 
+    def test_ha_ok_cleared_on_midnight_reset(self):
+        threshold = self.mod._HA_THRESHOLD
+        setattr(self.mod, "_ha_ok", True)
+        mock_jitter = self._run_one_watcher_cycle(
+            initial_count=threshold, loop_count=0, in_privacy=False
+        )
+        mock_jitter.assert_not_called()
+        self.assertFalse(self.mod._ha_ok)
+
+    def test_jitter_starts_when_already_crossed_and_privacy_window_ends(self):
+        """Jitter must start once the privacy window ends if already crossed."""
+        threshold = self.mod._HA_THRESHOLD
+        mock_jitter = self._run_one_watcher_cycle(
+            initial_count=threshold, loop_count=threshold, in_privacy=False
+        )
+        mock_jitter.assert_called_once()
+
 
 class TestWatcherThread(unittest.TestCase):
     def setUp(self):
