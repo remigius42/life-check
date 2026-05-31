@@ -24,6 +24,10 @@ ignore = [
     "D407",  # not using numpy style
 ]
 
+# bandit runs via Codacy (not pre-commit); this config only applies there
+[tool.bandit.assert_used]
+skips = ["*/test_*.py"]
+
 [tool.pyright]
 pythonVersion = "3.13"
 typeCheckingMode = "standard"
