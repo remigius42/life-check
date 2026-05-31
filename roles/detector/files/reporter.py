@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""
-Daily beam-break report script.
+"""Daily beam-break report script.
 
 Reads counts.json and POSTs a summary to a webhook.
 """
@@ -106,8 +105,7 @@ def _read_count(counts_path):
 
 
 def _post(url, message):
-    """
-    POST a JSON ``{"text": message}`` payload to url.
+    """POST a JSON ``{"text": message}`` payload to url.
 
     Exits non-zero on failure.
     """

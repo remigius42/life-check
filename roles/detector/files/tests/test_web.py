@@ -388,8 +388,7 @@ class TestPrivacyWindow(unittest.TestCase):
 
 
 class TestWatchHaStateRestart(unittest.TestCase):
-    """
-    _watch_ha_state must reflect real count at startup.
+    """_watch_ha_state must reflect real count at startup.
 
     Must not assume last_crossed=False.
     """
@@ -402,8 +401,7 @@ class TestWatchHaStateRestart(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_ha_ok_set_immediately_when_already_above_threshold(self):
-        """
-        Restart while count >= threshold: _ha_ok True immediately.
+        """Restart while count >= threshold: _ha_ok True immediately.
 
         No jitter timer.
         """
@@ -435,8 +433,7 @@ class TestWatchHaStatePrivacyWindowTransition(unittest.TestCase):
         self.tmp.cleanup()
 
     def _run_one_watcher_cycle(self, initial_count, loop_count, in_privacy):
-        """
-        Run _watch_ha_state through exactly one loop iteration.
+        """Run _watch_ha_state through exactly one loop iteration.
 
         initial_count: returned on the pre-loop _read_counts call (sets last_crossed).
         loop_count: returned on the in-loop _read_counts call.
@@ -573,8 +570,7 @@ class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
 
 
 class TestJitterCallbackEpochRace(unittest.TestCase):
-    """
-    _jitter_callback must not commit _ha_ok=True when _ha_epoch is bumped.
+    """_jitter_callback must not commit _ha_ok=True when _ha_epoch is bumped.
 
     Race: between the initial epoch check and the final _set_ha_ok call.
     """
