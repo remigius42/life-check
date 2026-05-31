@@ -533,7 +533,7 @@ class TestGpioInitRetry(unittest.TestCase):
             RpiGpioPort(
                 17,
                 retries=3,
-                _sleep_fn=lambda s: sleep_calls.append(s),
+                _sleep_fn=sleep_calls.append,
                 _gpio_module=gpio_mod,
             )
         self.assertEqual(len(sleep_calls), 2)  # retries-1 sleeps before final failure
