@@ -227,13 +227,14 @@ class TestHaTimerCancellation(unittest.TestCase):
 
     def test_cancel_ha_timer_cancels_and_clears(self):
         mock_timer = MagicMock()
-        setattr(self.mod, "_ha_timer", mock_timer)
+        # B010: setattr is intentional — self.mod is a dynamically reloaded ModuleType
+        setattr(self.mod, "_ha_timer", mock_timer)  # noqa: B010
         self.mod._cancel_ha_timer()
         mock_timer.cancel.assert_called_once()
         self.assertIsNone(self.mod._ha_timer)
 
     def test_cancel_ha_timer_noop_when_no_timer(self):
-        setattr(self.mod, "_ha_timer", None)
+        setattr(self.mod, "_ha_timer", None)  # noqa: B010
         self.mod._cancel_ha_timer()  # must not raise
         self.assertIsNone(self.mod._ha_timer)
 
@@ -241,9 +242,8 @@ class TestHaTimerCancellation(unittest.TestCase):
         """On threshold drop, pending timer is cancelled before state is cleared."""
         mock_timer = MagicMock()
         mock_timer.is_alive.return_value = True
-        setattr(self.mod, "_ha_timer", mock_timer)
-        setattr(self.mod, "_ha_ok", True)
-
+        setattr(self.mod, "_ha_timer", mock_timer)  # noqa: B010
+        setattr(self.mod, "_ha_ok", True)  # noqa: B010
         self.mod._cancel_ha_timer()
         self.mod._set_ha_ok(False)
 
@@ -266,12 +266,12 @@ class TestHomeAssistantEndpoint(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_returns_not_ok_by_default(self):
-        setattr(self.mod, "_ha_ok", False)
+        setattr(self.mod, "_ha_ok", False)  # noqa: B010
         resp = self.client.get("/home-assistant")
         self.assertEqual(resp.get_json(), {"state": "not_ok"})
 
     def test_returns_ok_when_ha_ok_true(self):
-        setattr(self.mod, "_ha_ok", True)
+        setattr(self.mod, "_ha_ok", True)  # noqa: B010
         with patch.object(self.mod, "_in_privacy_window", return_value=False):
             resp = self.client.get("/home-assistant")
         self.assertEqual(resp.get_json(), {"state": "ok"})
@@ -286,7 +286,7 @@ class TestMaybeStartJitterTimer(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_starts_timer_when_none_exists(self):
-        setattr(self.mod, "_ha_timer", None)
+        setattr(self.mod, "_ha_timer", None)  # noqa: B010
         with patch("threading.Timer") as mock_timer_cls:
             mock_instance = MagicMock()
             mock_timer_cls.return_value = mock_instance
@@ -297,7 +297,7 @@ class TestMaybeStartJitterTimer(unittest.TestCase):
     def test_does_not_start_new_timer_when_one_is_alive(self):
         mock_timer = MagicMock()
         mock_timer.is_alive.return_value = True
-        setattr(self.mod, "_ha_timer", mock_timer)
+        setattr(self.mod, "_ha_timer", mock_timer)  # noqa: B010
         with patch("threading.Timer") as mock_timer_cls:
             self.mod._maybe_start_jitter_timer()
         mock_timer_cls.assert_not_called()
@@ -305,7 +305,7 @@ class TestMaybeStartJitterTimer(unittest.TestCase):
     def test_starts_new_timer_when_existing_timer_dead(self):
         mock_timer = MagicMock()
         mock_timer.is_alive.return_value = False
-        setattr(self.mod, "_ha_timer", mock_timer)
+        setattr(self.mod, "_ha_timer", mock_timer)  # noqa: B010
         with patch("threading.Timer") as mock_timer_cls:
             mock_instance = MagicMock()
             mock_timer_cls.return_value = mock_instance
@@ -405,9 +405,8 @@ class TestWatchHaStateRestart(unittest.TestCase):
 
         No jitter timer.
         """
-        setattr(self.mod, "_ha_ok", False)
-        setattr(self.mod, "_ha_timer", None)
-
+        setattr(self.mod, "_ha_ok", False)  # noqa: B010
+        setattr(self.mod, "_ha_timer", None)  # noqa: B010
         above_threshold = self.mod._HA_THRESHOLD + 1
 
         with patch.object(self.mod, "_read_counts", return_value=(above_threshold, [])):
@@ -440,8 +439,8 @@ class TestWatchHaStatePrivacyWindowTransition(unittest.TestCase):
         in_privacy: return value for _in_privacy_window().
         """
         counts = iter([(initial_count, []), (loop_count, [])])
-        setattr(self.mod, "_ha_ok", False)
-        setattr(self.mod, "_ha_timer", None)
+        setattr(self.mod, "_ha_ok", False)  # noqa: B010
+        setattr(self.mod, "_ha_timer", None)  # noqa: B010
         with patch.object(self.mod, "_read_counts", side_effect=counts):
             with patch.object(self.mod, "_in_privacy_window", return_value=in_privacy):
                 with patch.object(self.mod, "_maybe_start_jitter_timer") as mock_jitter:
@@ -470,7 +469,7 @@ class TestWatchHaStatePrivacyWindowTransition(unittest.TestCase):
 
     def test_ha_ok_cleared_on_midnight_reset(self):
         threshold = self.mod._HA_THRESHOLD
-        setattr(self.mod, "_ha_ok", True)
+        setattr(self.mod, "_ha_ok", True)  # noqa: B010
         mock_jitter = self._run_one_watcher_cycle(
             initial_count=threshold, loop_count=0, in_privacy=False
         )
@@ -560,7 +559,7 @@ class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
 
     def test_returns_not_ok_in_window_even_when_ha_ok_true(self):
         mod = self._load_with_times("17:00", "08:00")
-        setattr(mod, "_ha_ok", True)
+        setattr(mod, "_ha_ok", True)  # noqa: B010
         client = mod.app.test_client()
         with patch("web.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 1, 1, 20, 0, 0)
@@ -569,7 +568,7 @@ class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
 
     def test_returns_ok_outside_window_when_ha_ok_true(self):
         mod = self._load_with_times("17:00", "08:00")
-        setattr(mod, "_ha_ok", True)
+        setattr(mod, "_ha_ok", True)  # noqa: B010
         client = mod.app.test_client()
         with patch("web.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
@@ -578,7 +577,7 @@ class TestHomeAssistantEndpointPrivacyWindow(unittest.TestCase):
 
     def test_returns_not_ok_outside_window_when_ha_ok_false(self):
         mod = self._load_with_times("17:00", "08:00")
-        setattr(mod, "_ha_ok", False)
+        setattr(mod, "_ha_ok", False)  # noqa: B010
         client = mod.app.test_client()
         with patch("web.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2026, 1, 1, 12, 0, 0)
@@ -600,10 +599,9 @@ class TestJitterCallbackEpochRace(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_stale_callback_does_not_set_ha_ok(self):
-        setattr(self.mod, "_ha_ok", False)
-        setattr(self.mod, "_ha_epoch", 0)
-        setattr(self.mod, "_ha_timer", None)
-
+        setattr(self.mod, "_ha_ok", False)  # noqa: B010
+        setattr(self.mod, "_ha_epoch", 0)  # noqa: B010
+        setattr(self.mod, "_ha_timer", None)  # noqa: B010
         # Synchronization: pause _jitter_callback after it passes the epoch
         # check (inside _read_counts) so the main thread can bump _ha_epoch.
         in_read_counts = threading.Event()
