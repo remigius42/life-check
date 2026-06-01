@@ -422,10 +422,10 @@ class TestWatchHaState(unittest.TestCase):
         self.assertIsNone(self.mod._ha_timer)
         mock_jitter.assert_not_called()
 
-    def test_ha_ok_stays_false_on_restart_during_privacy_window(self):
-        """Restart while crossed inside privacy window: _ha_ok must stay False.
+    def test_ha_ok_set_true_on_restart_during_privacy_window(self):
+        """Restart while crossed inside privacy window: _ha_ok must be True.
 
-        Privacy window suppresses ok; jitter fires only after window ends.
+        Privacy is enforced at the endpoint; _ha_ok reflects threshold only.
         """
         setattr(self.mod, "_ha_ok", False)  # noqa: B010
         setattr(self.mod, "_ha_timer", None)  # noqa: B010
@@ -434,6 +434,7 @@ class TestWatchHaState(unittest.TestCase):
         with (
             patch.object(self.mod, "_read_counts", return_value=(above_threshold, [])),
             patch.object(self.mod, "_in_privacy_window", return_value=True),
+            patch.object(self.mod, "_maybe_start_jitter_timer") as mock_jitter,
             patch.object(self.mod, "time") as mock_time,
         ):
             mock_time.sleep.side_effect = SystemExit
@@ -442,7 +443,9 @@ class TestWatchHaState(unittest.TestCase):
             except SystemExit:
                 pass
 
-        self.assertFalse(self.mod._ha_ok)
+        self.assertTrue(self.mod._ha_ok)
+        self.assertIsNone(self.mod._ha_timer)
+        mock_jitter.assert_not_called()
 
     def _run_one_watcher_cycle(
         self, initial_count, loop_count, in_privacy, initial_in_privacy=None
@@ -475,13 +478,12 @@ class TestWatchHaState(unittest.TestCase):
                 pass
         return mock_jitter
 
-    def test_no_jitter_timer_when_threshold_crossed_in_privacy_window(self):
+    def test_jitter_timer_started_when_threshold_crossed_in_privacy_window(self):
         threshold = self.mod._HA_THRESHOLD
         mock_jitter = self._run_one_watcher_cycle(
             initial_count=0, loop_count=threshold, in_privacy=True
         )
-        mock_jitter.assert_not_called()
-        self.assertFalse(self.mod._ha_ok)
+        mock_jitter.assert_called_once()
 
     def test_jitter_timer_started_when_threshold_crossed_outside_privacy_window(self):
         threshold = self.mod._HA_THRESHOLD
@@ -499,8 +501,12 @@ class TestWatchHaState(unittest.TestCase):
         mock_jitter.assert_not_called()
         self.assertFalse(self.mod._ha_ok)
 
-    def test_jitter_starts_when_already_crossed_and_privacy_window_ends(self):
-        """Jitter must start once the privacy window ends if already crossed."""
+    def test_no_jitter_timer_when_only_privacy_window_ends(self):
+        """Privacy window end alone must not start a new jitter timer.
+
+        The timer was started when threshold was freshly crossed; if it already
+        fired during privacy, _ha_ok is True and no new delay is added.
+        """
         threshold = self.mod._HA_THRESHOLD
         mock_jitter = self._run_one_watcher_cycle(
             initial_count=threshold,
@@ -508,8 +514,7 @@ class TestWatchHaState(unittest.TestCase):
             in_privacy=False,
             initial_in_privacy=True,
         )
-        mock_jitter.assert_called_once()
-        self.assertFalse(self.mod._ha_ok)
+        mock_jitter.assert_not_called()
 
 
 class TestWatcherThread(unittest.TestCase):

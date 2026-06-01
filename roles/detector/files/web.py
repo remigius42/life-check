@@ -126,37 +126,27 @@ def _cancel_ha_timer() -> None:
         _ha_epoch += 1
 
 
-def _handle_threshold_reached(
-    freshly_crossed: bool, in_privacy: bool, privacy_window_ended: bool
-) -> None:
+def _handle_threshold_reached(freshly_crossed: bool) -> None:
     """Update HA state for the above-threshold branch of _tick_ha_watcher."""
-    if in_privacy:
-        if freshly_crossed:
-            _cancel_ha_timer()
-            _set_ha_ok(False)
-    elif freshly_crossed or privacy_window_ended:
+    if freshly_crossed:
         _maybe_start_jitter_timer()
 
 
-def _tick_ha_watcher(
-    last_threshold_reached: bool, last_in_privacy: bool
-) -> tuple[bool, bool]:
+def _tick_ha_watcher(last_threshold_reached: bool) -> bool:
     """Evaluate current count and update HA state if threshold status changed.
 
-    Returns the new (threshold_reached, in_privacy) state for the next tick.
+    Returns the new threshold_reached state for the next tick.
     """
     count, _ = _read_counts()
     threshold_reached = count >= _HA_THRESHOLD
-    in_privacy = _in_privacy_window()
     freshly_crossed = threshold_reached and not last_threshold_reached
     midnight_reset = not threshold_reached and last_threshold_reached
-    privacy_window_ended = last_in_privacy and not in_privacy
     if threshold_reached:
-        _handle_threshold_reached(freshly_crossed, in_privacy, privacy_window_ended)
+        _handle_threshold_reached(freshly_crossed)
     elif midnight_reset:
         _cancel_ha_timer()
         _set_ha_ok(False)
-    return threshold_reached, in_privacy
+    return threshold_reached
 
 
 def _watch_ha_state() -> None:
@@ -168,15 +158,12 @@ def _watch_ha_state() -> None:
         count, _ = _read_counts()
     except Exception:
         count = 0
-    last_in_privacy = _in_privacy_window()
     last_threshold_reached = count >= _HA_THRESHOLD
     if last_threshold_reached:
-        _set_ha_ok(not last_in_privacy)  # no jitter on restart; respect privacy window
+        _set_ha_ok(True)  # no jitter on restart; privacy masked at endpoint
     while True:
         try:
-            last_threshold_reached, last_in_privacy = _tick_ha_watcher(
-                last_threshold_reached, last_in_privacy
-            )
+            last_threshold_reached = _tick_ha_watcher(last_threshold_reached)
         except Exception as exc:
             _log.warning("HA watcher error: %s", exc)
         time.sleep(1)
