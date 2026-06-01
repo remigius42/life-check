@@ -287,7 +287,17 @@ class BeamDetector:
             return 0
 
     def _load_history(self, data: dict) -> None:
-        for k, v in data.get("history", {}).items():
+        history = data.get("history")
+        if history is None:
+            return
+        if not isinstance(history, Mapping):
+            _log.warning(
+                "Invalid history payload in %s — expected mapping, got %s",
+                self._cfg.counts_path,
+                type(history).__name__,
+            )
+            return
+        for k, v in history.items():
             try:
                 self._history[k] = int(v)
             except (ValueError, TypeError):
