@@ -126,25 +126,28 @@ def _cancel_ha_timer() -> None:
         _ha_epoch += 1
 
 
-def _tick_ha_watcher(last_crossed: bool) -> bool:
+def _tick_ha_watcher(last_crossed: bool, last_in_privacy: bool) -> tuple[bool, bool]:
     """Evaluate current count and update HA state if threshold status changed.
 
-    Returns the new crossed state for the next tick.
+    Returns the new (crossed, in_privacy) state for the next tick.
     """
     count, _ = _read_counts()
     crossed = count >= _HA_THRESHOLD
+    in_privacy = _in_privacy_window()
     threshold_crossed = crossed and not last_crossed
     midnight_reset = not crossed and last_crossed
+    privacy_window_ended = last_in_privacy and not in_privacy
     if crossed:
-        if not _in_privacy_window():
+        if in_privacy:
+            if threshold_crossed:
+                _cancel_ha_timer()
+                _set_ha_ok(False)
+        elif threshold_crossed or privacy_window_ended:
             _maybe_start_jitter_timer()
-        elif threshold_crossed:
-            _cancel_ha_timer()
-            _set_ha_ok(False)
     elif midnight_reset:
         _cancel_ha_timer()
         _set_ha_ok(False)
-    return crossed
+    return crossed, in_privacy
 
 
 def _watch_ha_state() -> None:
@@ -159,9 +162,12 @@ def _watch_ha_state() -> None:
     last_crossed = count >= _HA_THRESHOLD
     if last_crossed:
         _set_ha_ok(True)  # already crossed before restart — no jitter needed
+    last_in_privacy = _in_privacy_window()
     while True:
         try:
-            last_crossed = _tick_ha_watcher(last_crossed)
+            last_crossed, last_in_privacy = _tick_ha_watcher(
+                last_crossed, last_in_privacy
+            )
         except Exception as exc:
             _log.warning("HA watcher error: %s", exc)
         time.sleep(1)
