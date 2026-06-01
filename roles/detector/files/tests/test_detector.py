@@ -478,6 +478,23 @@ class TestPersistence(unittest.TestCase):
         self.assertEqual(det._history, {})
         self.assertTrue((Path(self._tmp.name) / "counts.json.bak").exists())
 
+    def test_non_mapping_history_ignored_with_warning(self):
+        counts_path = Path(self._tmp.name) / "counts.json"
+        counts_path.write_text(
+            json.dumps(
+                {
+                    "date": datetime.date.today().isoformat(),
+                    "today_count": 0,
+                    "history": ["not", "a", "mapping"],
+                }
+            )
+        )
+        gpio = FakeGpioPort()
+        with self.assertLogs("detector", level="WARNING") as cm:
+            det = _make_detector(self._tmp.name, gpio)
+        self.assertEqual(det._history, {})
+        self.assertTrue(any("history" in msg.lower() for msg in cm.output))
+
     def test_save_failure_does_not_crash(self):
         import unittest.mock
 
