@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.2] - 2026-06-01
+
+### Fixed
+
+#### Raspberry Pi route
+
+- Restarting the web server while already above threshold outside the privacy
+  window no longer starts a spurious jitter timer; `ha_ok` is set immediately
+  with no timer, as intended
+
 ## [2.4.1] - 2026-06-01
+
+> **Note:** contains a regression where restarting the web server while already
+> above threshold outside the privacy window starts a spurious jitter timer;
+> superseded by 2.4.2.
 
 ### Fixed
 
@@ -202,4 +216,5 @@ ______________________________________________________________________
 [2.3.0]: https://github.com/remigius42/life-check/compare/v2.2.1...v2.3.0
 [2.4.0]: https://github.com/remigius42/life-check/compare/v2.3.0...v2.4.0
 [2.4.1]: https://github.com/remigius42/life-check/compare/v2.4.0...v2.4.1
-[unreleased]: https://github.com/remigius42/life-check/compare/v2.4.1...HEAD
+[2.4.2]: https://github.com/remigius42/life-check/compare/v2.4.1...v2.4.2
+[unreleased]: https://github.com/remigius42/life-check/compare/v2.4.2...HEAD
