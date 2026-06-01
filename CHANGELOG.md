@@ -15,9 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Raspberry Pi route
 
-- Restarting the web server while already above threshold outside the privacy
-  window no longer starts a spurious jitter timer; `ha_ok` is set immediately
-  with no timer, as intended
+- The spurious jitter timer on restart while already above threshold outside
+  the privacy window is fixed; `ha_ok` is set immediately with no timer
+- Jitter is no longer cancelled when the threshold is crossed during the
+  privacy window; it fires normally (the endpoint already masks the response).
+  On restart while already above threshold, `ha_ok` is set immediately
+  regardless of privacy state.
 
 ## [2.4.1] - 2026-06-01
 
