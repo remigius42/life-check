@@ -421,6 +421,26 @@ class TestWatchHaStateRestart(unittest.TestCase):
         self.assertTrue(self.mod._ha_ok)
         self.assertIsNone(self.mod._ha_timer)
 
+    def test_ha_ok_stays_false_on_restart_during_privacy_window(self):
+        """Restart while crossed inside privacy window: _ha_ok must stay False.
+
+        Privacy window suppresses ok; jitter fires only after window ends.
+        """
+        setattr(self.mod, "_ha_ok", False)  # noqa: B010
+        setattr(self.mod, "_ha_timer", None)  # noqa: B010
+        above_threshold = self.mod._HA_THRESHOLD + 1
+
+        with patch.object(self.mod, "_read_counts", return_value=(above_threshold, [])):
+            with patch.object(self.mod, "_in_privacy_window", return_value=True):
+                with patch.object(self.mod, "time") as mock_time:
+                    mock_time.sleep.side_effect = SystemExit
+                    try:
+                        self.mod._watch_ha_state()
+                    except SystemExit:
+                        pass
+
+        self.assertFalse(self.mod._ha_ok)
+
     def test_no_jitter_on_restart_outside_privacy_window(self):
         """Restart while crossed outside privacy window must not start jitter.
 
@@ -518,6 +538,7 @@ class TestWatchHaStatePrivacyWindowTransition(unittest.TestCase):
             initial_in_privacy=True,
         )
         mock_jitter.assert_called_once()
+        self.assertFalse(self.mod._ha_ok)
 
 
 class TestWatcherThread(unittest.TestCase):
