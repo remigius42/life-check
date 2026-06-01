@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-06-01
+
+### Fixed
+
+#### Raspberry Pi route
+
+- HA watcher no longer stays stuck at `not_ok` after the privacy window ends
+  when the threshold crossing occurred during the window; the jitter timer now
+  starts correctly once the window closes
+- `counts.json` history entries that are not a mapping (e.g. a list) are
+  skipped with a warning instead of raising `AttributeError`
+- JSON files are now read with explicit UTF-8 encoding, avoiding
+  locale-dependent behavior on non-UTF-8 systems
+- `DETECTOR_REPORT_THRESHOLD=0` (or negative) is now clamped to `1` in the
+  daily reporter, consistent with the web server's existing behavior
+
 ## [2.4.0] - 2026-05-19
 
 ### Added
@@ -185,4 +201,5 @@ ______________________________________________________________________
 [2.2.1]: https://github.com/remigius42/life-check/compare/v2.2.0...v2.2.1
 [2.3.0]: https://github.com/remigius42/life-check/compare/v2.2.1...v2.3.0
 [2.4.0]: https://github.com/remigius42/life-check/compare/v2.3.0...v2.4.0
-[unreleased]: https://github.com/remigius42/life-check/compare/v2.4.0...HEAD
+[2.4.1]: https://github.com/remigius42/life-check/compare/v2.4.0...v2.4.1
+[unreleased]: https://github.com/remigius42/life-check/compare/v2.4.1...HEAD

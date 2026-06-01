@@ -38,7 +38,7 @@ esphome:
   min_version: "2024.6.0"
   project:
     name: "remigius42.life-check"
-    version: "2.4.0"
+    version: "2.4.1"
   on_boot:
     # Derive HA status from today_count (source of truth) rather than storing a
     # duplicate via restore_value. This correctly handles a reboot after midnight
